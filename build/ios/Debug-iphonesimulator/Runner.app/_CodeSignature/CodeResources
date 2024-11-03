@@ -46,7 +46,7 @@
 		</data>
 		<key>Frameworks/App.framework/App</key>
 		<data>
-		uWdfFkXmtp7Z3lAk9ElHebAKC60=
+		j40GodPGrKcsbHRZgOGm5kMDuss=
 		</data>
 		<key>Frameworks/App.framework/Info.plist</key>
 		<data>
@@ -54,7 +54,7 @@
 		</data>
 		<key>Frameworks/App.framework/_CodeSignature/CodeResources</key>
 		<data>
-		+EPTExDfuVYxIdVcrOL0HXeB/4g=
+		syPQj5WWk8bW5cJiuQ+yaWXlM3o=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
 		<data>
@@ -114,7 +114,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/kernel_blob.bin</key>
 		<data>
-		gUP2+btZVX22+RqiPYjulzoz8Y4=
+		4htHSmocX+6gdTS+tP5Ed/AfeLo=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -463,6 +463,10 @@
 		<data>
 		wJV5dCKEGl+FAtDc8wJJh/fvKXs=
 		</data>
+		<key>Frameworks/Flutter.framework/PrivacyInfo.xcprivacy</key>
+		<data>
+		D+cqXttvC7E/uziGjFdqFabWd7A=
+		</data>
 		<key>Frameworks/Flutter.framework/_CodeSignature/CodeResources</key>
 		<data>
 		RNNbvQ2oYp/rjJhY47Fmbmoikx4=
@@ -656,7 +660,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			oWh4ysqZv8BzFeDqIcd9y7KdNwo5LK1yTekdGMJBhf8=
+			E4sz6JDjUV5SjLCAeM3FwA3BnMGmgkcoVqVfdqEUw8s=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/Info.plist</key>
@@ -670,7 +674,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			rHCiXo4siw3MvMy6t5BJo0B89TYLAVutRyZGYx+RGj8=
+			/ZI1C/jrW12itKbV+i/UJ9Ed8xK4ZSSxPnW8SZDuJyc=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
@@ -775,7 +779,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			XKGUJenI11rQewStDgCLvuFZMeJIPEwZ4rUPCF9O/Tg=
+			hhZ8Z9TFztZJ3K5A8mFLOYBQodKKRcRzpPLJDs0utbo=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
@@ -1228,6 +1232,13 @@
 			<key>hash2</key>
 			<data>
 			0VjriRpZ7AZZaP/0mMAPMJPhi6LoMB4MhXzL5j24tGs=
+			</data>
+		</dict>
+		<key>Frameworks/Flutter.framework/PrivacyInfo.xcprivacy</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			n5XX54YqS1a2btkmvW1iLSplRagn0ZhHJ4tDjVcdQhI=
 			</data>
 		</dict>
 		<key>Frameworks/Flutter.framework/_CodeSignature/CodeResources</key>
