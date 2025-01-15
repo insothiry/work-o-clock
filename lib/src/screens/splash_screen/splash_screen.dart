@@ -1,44 +1,106 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:work_o_clock/src/screens/login/login_screen.dart';
+import 'package:work_o_clock/src/utils/base_colors.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounceAnimation;
+  late Animation<double> _opacityAnimation;
+
   @override
   void initState() {
     super.initState();
-    // Timer to navigate to the next screen after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      );
+
+    // Initialize Animation Controller
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    // Logo bounce animation
+    _bounceAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0, end: -30).chain(
+          CurveTween(curve: Curves.easeOut),
+        ),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -30, end: 10).chain(
+          CurveTween(curve: Curves.bounceOut),
+        ),
+        weight: 50,
+      ),
+    ]).animate(_controller);
+
+    _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _controller.forward();
+
+    Timer(const Duration(seconds: 4), () {
+      Get.offAll(() => LoginScreen());
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    const logoSize = 150.0;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App logo or image
-            Image.asset(
-              'assets/logos/work_clock_logo.jpg',
-              height: 200,
-              width: 200,
-            ),
-            const Text(
-              "WorkO' Clock",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ],
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_bounceAnimation, _opacityAnimation]),
+          builder: (context, child) {
+            return Opacity(
+              opacity: _opacityAnimation.value,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Logo with bounce animation
+                  Transform.translate(
+                    offset: Offset(0, _bounceAnimation.value),
+                    child: Image.asset(
+                      "assets/logos/work-logo.png",
+                      width: logoSize,
+                      height: logoSize,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Static text
+                  const Text(
+                    "WorkO' Clock",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: BaseColors.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

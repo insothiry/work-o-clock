@@ -6,7 +6,7 @@ import 'package:work_o_clock/src/widgets/base_button.dart';
 class TaskDetailScreen extends StatelessWidget {
   final Task task;
 
-  TaskDetailScreen({required this.task});
+  const TaskDetailScreen({super.key, required this.task});
 
   Icon _getStatusIcon(String status) {
     switch (status) {

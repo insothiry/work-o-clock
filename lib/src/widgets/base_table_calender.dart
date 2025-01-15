@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
@@ -6,22 +7,24 @@ class BaseCalendar extends StatefulWidget {
   const BaseCalendar({super.key});
 
   @override
-  _BaseCalendarState createState() => _BaseCalendarState();
+  BaseCalendarState createState() => BaseCalendarState();
 }
 
-class _BaseCalendarState extends State<BaseCalendar> {
+class BaseCalendarState extends State<BaseCalendar> {
   late DateTime _focusedDay;
   late DateTime _selectedDay;
-  bool _isWeekView = true;
+  bool _isWeekView = false;
+  bool isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
     _focusedDay = DateTime.now();
     _selectedDay = _focusedDay;
+    isDarkMode = Get.isDarkMode;
   }
 
-  List<DateTime> _getDaysInWeek(DateTime day) {
+  List<DateTime> getDaysInWeek(DateTime day) {
     final startOfWeek = day.subtract(Duration(days: day.weekday - 1));
     return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
   }
@@ -39,14 +42,43 @@ class _BaseCalendarState extends State<BaseCalendar> {
       },
       firstDay: DateTime.utc(2020, 1, 1),
       lastDay: DateTime.utc(2030, 12, 31),
-      calendarStyle: const CalendarStyle(
-        todayDecoration: BoxDecoration(
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekdayStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
+          fontSize: 14.0,
+          height: 1.5,
+        ),
+        weekendStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.orange
+              : Colors.red,
+          fontSize: 14.0,
+          height: 1.5,
+        ),
+      ),
+      calendarStyle: CalendarStyle(
+        todayDecoration: const BoxDecoration(
           color: BaseColors.secondaryColor,
           shape: BoxShape.circle,
         ),
-        selectedDecoration: BoxDecoration(
+        selectedDecoration: const BoxDecoration(
           color: BaseColors.primaryColor,
           shape: BoxShape.circle,
+        ),
+        defaultTextStyle: TextStyle(
+          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
+        ),
+        weekendTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.orange
+              : Colors.red,
+        ),
+        outsideTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey
+              : Colors.black54,
         ),
       ),
       daysOfWeekVisible: true,

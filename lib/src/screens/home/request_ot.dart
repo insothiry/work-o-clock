@@ -2,9 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 import 'package:work_o_clock/src/widgets/base_button.dart';
+import 'package:intl/intl.dart';
 
-class RequestOvertimeScreen extends StatelessWidget {
+class RequestOvertimeScreen extends StatefulWidget {
   const RequestOvertimeScreen({super.key});
+
+  @override
+  _RequestOvertimeScreenState createState() => _RequestOvertimeScreenState();
+}
+
+class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
+  final TextEditingController dateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the date field with today's date
+    dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+  }
+
+  @override
+  void dispose() {
+    dateController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +52,7 @@ class RequestOvertimeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                controller: dateController,
                 decoration: InputDecoration(
                   hintText: 'Select date',
                   prefixIcon: const Icon(Icons.calendar_today),
@@ -40,7 +62,6 @@ class RequestOvertimeScreen extends StatelessWidget {
                 ),
                 readOnly: true,
                 onTap: () async {
-                  // Implement date picker here
                   DateTime? selectedDate = await showDatePicker(
                     context: context,
                     initialDate: DateTime.now(),
@@ -48,9 +69,11 @@ class RequestOvertimeScreen extends StatelessWidget {
                     lastDate: DateTime(2101),
                   );
 
-                  // Set the selected date in the text field
                   if (selectedDate != null) {
-                    // Update the text field with the selected date
+                    setState(() {
+                      dateController.text =
+                          DateFormat('dd/MM/yyyy').format(selectedDate);
+                    });
                   }
                 },
               ),
@@ -91,7 +114,7 @@ class RequestOvertimeScreen extends StatelessWidget {
                 text: 'Submit Request',
                 onPressed: () {
                   Get.snackbar('Request Submitted',
-                      'Your leave request has been submitted.',
+                      'Your overtime request has been submitted.',
                       snackPosition: SnackPosition.BOTTOM);
                 },
                 backgroundColor: BaseColors.primaryColor,

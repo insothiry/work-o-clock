@@ -46,7 +46,7 @@
 		</data>
 		<key>Frameworks/App.framework/App</key>
 		<data>
-		j40GodPGrKcsbHRZgOGm5kMDuss=
+		4B8sCOHcClrzVSJTbRyZO3SccRI=
 		</data>
 		<key>Frameworks/App.framework/Info.plist</key>
 		<data>
@@ -54,15 +54,15 @@
 		</data>
 		<key>Frameworks/App.framework/_CodeSignature/CodeResources</key>
 		<data>
-		syPQj5WWk8bW5cJiuQ+yaWXlM3o=
+		LqZorN34JYi06JS8Oc0E+Ls2SbQ=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
 		<data>
-		FhWCMkA1THZtFTjpxhenF+Vl2j0=
+		jYi/dl90k5SVII8Vsgg9HXWMe18=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.json</key>
 		<data>
-		Kxzhg/nLwB48DElqqeH4+CxSQOo=
+		jAcXajRmcbuqU1C5hc8FYTaeZd8=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/FontManifest.json</key>
 		<data>
@@ -70,7 +70,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/NOTICES.Z</key>
 		<data>
-		DvBheCX1HKkAI0pOCblLrJmJQzk=
+		L+S4S862vWr9hyVJFmPyEGq4koQ=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/assets/fonts/Jost/static/Jost-Bold.ttf</key>
 		<data>
@@ -88,6 +88,14 @@
 		<data>
 		Qm6IAg+Hw/k3YX/F8csvPyd4la4=
 		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/icons/success-icon.svg</key>
+		<data>
+		NABvrEdGXIpgXPRbjEKBl38otak=
+		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/images/avatar5.jpg</key>
+		<data>
+		htMjHJPPAhW1c2ZiONdyo3V/LM4=
+		</data>
 		<key>Frameworks/App.framework/flutter_assets/assets/images/default_pf.svg.png</key>
 		<data>
 		CvzbLZmYL8Kqk72++Mep9FC35vY=
@@ -96,9 +104,25 @@
 		<data>
 		8DoWsIMaHsaY6wrg+b1KhbOLsSg=
 		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/images/login-img.jpg</key>
+		<data>
+		fctQDz6AbIAMo/btD4dZWKC8zSQ=
+		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/images/profile-icon.png</key>
+		<data>
+		8AXYO7Kjp63ZYvUprtNKy41Go44=
+		</data>
 		<key>Frameworks/App.framework/flutter_assets/assets/logos/clock.png</key>
 		<data>
 		BdgJMN/Ecol42SsRGHzaOv8jkyI=
+		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/logos/work-logo-black.png</key>
+		<data>
+		tdh+2VhYX73c3qyqlWpWaNiKV9U=
+		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/logos/work-logo.png</key>
+		<data>
+		2f0R6u8ObIH2WXqobg0kEVX0H30=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/assets/logos/work_clock_logo.jpg</key>
 		<data>
@@ -114,7 +138,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/kernel_blob.bin</key>
 		<data>
-		4htHSmocX+6gdTS+tP5Ed/AfeLo=
+		brK9kK3b6DfiQaTr0EEuclTHdyI=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -463,10 +487,6 @@
 		<data>
 		wJV5dCKEGl+FAtDc8wJJh/fvKXs=
 		</data>
-		<key>Frameworks/Flutter.framework/PrivacyInfo.xcprivacy</key>
-		<data>
-		D+cqXttvC7E/uziGjFdqFabWd7A=
-		</data>
 		<key>Frameworks/Flutter.framework/_CodeSignature/CodeResources</key>
 		<data>
 		RNNbvQ2oYp/rjJhY47Fmbmoikx4=
@@ -535,6 +555,26 @@
 		<data>
 		YIiJ5tHvqBeSpBm2mcfVZdaGz3E=
 		</data>
+		<key>Frameworks/geolocator_apple.framework/Info.plist</key>
+		<data>
+		eNSYmqesePX32gO1RleX0Vejwbc=
+		</data>
+		<key>Frameworks/geolocator_apple.framework/_CodeSignature/CodeResources</key>
+		<data>
+		3JtvQspZU3LRqFhBwCLVFRrF6oU=
+		</data>
+		<key>Frameworks/geolocator_apple.framework/geolocator_apple</key>
+		<data>
+		Ed2bPKZYhpGMhaE5zVPDsPogJNM=
+		</data>
+		<key>Frameworks/geolocator_apple.framework/geolocator_apple_privacy.bundle/Info.plist</key>
+		<data>
+		85AgYygf4rAQm8LM4aSnYcEs50M=
+		</data>
+		<key>Frameworks/geolocator_apple.framework/geolocator_apple_privacy.bundle/PrivacyInfo.xcprivacy</key>
+		<data>
+		KFiVi4mWKmBFkTjfe3H4jsOvLNM=
+		</data>
 		<key>Frameworks/image_picker_ios.framework/Info.plist</key>
 		<data>
 		yt7gQpfsAAvjP4WnelTMGwpsCfg=
@@ -577,7 +617,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		U9nzDnAcavOFiU8LUhIVdR19XvU=
+		3BR2rGmp/E+HPFHUlSBMo9FqeZs=
 		</data>
 		<key>PkgInfo</key>
 		<data>
@@ -660,7 +700,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			E4sz6JDjUV5SjLCAeM3FwA3BnMGmgkcoVqVfdqEUw8s=
+			1eGxe8tMc/NiNQjTUmc9kzsce1uLAH3D8/gOjcK9HEY=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/Info.plist</key>
@@ -674,21 +714,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			/ZI1C/jrW12itKbV+i/UJ9Ed8xK4ZSSxPnW8SZDuJyc=
+			xcahyLDDJs2aDkuKcgP5WKI7FuqojIgdhR2FwD2ZDDo=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			/MQI/ZfWcZow9WmC2LkZS35quLeOEsFaIRfsF2SbAZg=
+			2izfQSLsSGmwflufAPW0ulo/S1mRRUsaewY7lF0i/uE=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4VwgoU+C9gghSQLR9NHkphXFVLU/0/rxFv3X66S+veM=
+			1JB6Gc5BWiw5MS2EMcbRJlwgSkumu/mVh12GrV//8m8=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/FontManifest.json</key>
@@ -702,7 +742,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZNeTuTy+7IaVncZxQ/rKS4oNNYkswGwMKIyUoUXYiW4=
+			JSCwD8yEcTOV9v/F1FA1kWBUGSmdAlSvptqdhQ5WKtE=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/assets/fonts/Jost/static/Jost-Bold.ttf</key>
@@ -733,6 +773,20 @@
 			EN9xzvhK4NcDHX/6BysYU0M2W+Dlm+xKwjHnx3gRWEs=
 			</data>
 		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/icons/success-icon.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			WAphcvJTQ5QIJ+IRXtu2px7cWjIKv8ohXvwKBp/YZFA=
+			</data>
+		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/images/avatar5.jpg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			hVTnV93viXZ07ibBmWLstVj6sfWf+HDwZ5SgVMt36OA=
+			</data>
+		</dict>
 		<key>Frameworks/App.framework/flutter_assets/assets/images/default_pf.svg.png</key>
 		<dict>
 			<key>hash2</key>
@@ -747,11 +801,39 @@
 			wDqsNJmsrHwyfAk12FacW9grb0gB3Vh7dGeUt0L8KsM=
 			</data>
 		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/images/login-img.jpg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			bs6eAb2JyQ3nmCNFNoGvp7DBAcpdriRVoBJaN7nBxs8=
+			</data>
+		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/images/profile-icon.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			N68U84Z5T0LgJDZXxTf4wOyh0YV7UiSfPgwkb1Wkt9w=
+			</data>
+		</dict>
 		<key>Frameworks/App.framework/flutter_assets/assets/logos/clock.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			B5WovCaRxYXUJgKlngn7+voKUwcOp3Lpd26zJQa+cVE=
+			</data>
+		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/logos/work-logo-black.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			cFwUVDDqpxq1yZdbWcTUOyNU2s4IrAOH2LxlwNFw3VQ=
+			</data>
+		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/logos/work-logo.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KOxVAD5uBRenKgX00wRGY8kRtPBMVYdosZwyxsiAk8s=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/assets/logos/work_clock_logo.jpg</key>
@@ -779,7 +861,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hhZ8Z9TFztZJ3K5A8mFLOYBQodKKRcRzpPLJDs0utbo=
+			wK/0oFdE7iAqxZXyRIZqJ1G0y5kq57/fbV9Wf8c+rek=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
@@ -1234,13 +1316,6 @@
 			0VjriRpZ7AZZaP/0mMAPMJPhi6LoMB4MhXzL5j24tGs=
 			</data>
 		</dict>
-		<key>Frameworks/Flutter.framework/PrivacyInfo.xcprivacy</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			n5XX54YqS1a2btkmvW1iLSplRagn0ZhHJ4tDjVcdQhI=
-			</data>
-		</dict>
 		<key>Frameworks/Flutter.framework/_CodeSignature/CodeResources</key>
 		<dict>
 			<key>hash2</key>
@@ -1358,6 +1433,41 @@
 			<key>hash2</key>
 			<data>
 			RyJqKWCN8gatChEOav61p3/1dawd+cdr/bLW37P6/tE=
+			</data>
+		</dict>
+		<key>Frameworks/geolocator_apple.framework/Info.plist</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			9CHsQAXM1gg8SRtlLysn6x4LY4dUKk1jQAnfYFb42Pk=
+			</data>
+		</dict>
+		<key>Frameworks/geolocator_apple.framework/_CodeSignature/CodeResources</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			OJBPSkVsb7khb0eCK+JfqCL7/AewMMAW/2mlcsCQar4=
+			</data>
+		</dict>
+		<key>Frameworks/geolocator_apple.framework/geolocator_apple</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			XITTQScJ3v8gaUgDmkQBdOSP4FCowPDD5juSC2adbX0=
+			</data>
+		</dict>
+		<key>Frameworks/geolocator_apple.framework/geolocator_apple_privacy.bundle/Info.plist</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			4ln+L/cUAIxn/3FQ1rS0tkQ/LKpJunSXCzXD0Wa8VmE=
+			</data>
+		</dict>
+		<key>Frameworks/geolocator_apple.framework/geolocator_apple_privacy.bundle/PrivacyInfo.xcprivacy</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			p+c+xOFN/pYr5bFknUH/y01YGEb8+JJchzbtJ60mdTI=
 			</data>
 		</dict>
 		<key>Frameworks/image_picker_ios.framework/Info.plist</key>

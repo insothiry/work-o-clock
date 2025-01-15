@@ -3,17 +3,32 @@ import 'package:get/get.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 import 'package:work_o_clock/src/widgets/base_button.dart';
 
-class RequestLeaveScreen extends StatelessWidget {
+enum LeaveDuration { morning, afternoon, fullDay }
+
+class RequestLeaveScreen extends StatefulWidget {
   const RequestLeaveScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final leaveTypes = ['Sick Leave', 'Casual Leave', 'Annual Leave'];
-    String? selectedLeaveType;
-    DateTime? startDate;
-    DateTime? endDate;
-    final reasonController = TextEditingController();
+  RequestLeaveScreenState createState() => RequestLeaveScreenState();
+}
 
+class RequestLeaveScreenState extends State<RequestLeaveScreen> {
+  final leaveTypes = ['Sick Leave', 'Casual Leave', 'Annual Leave'];
+  String? selectedLeaveType;
+  DateTime? startDate;
+  DateTime? endDate;
+  final reasonController = TextEditingController();
+  LeaveDuration? selectedDuration = LeaveDuration.fullDay;
+
+  @override
+  void initState() {
+    super.initState();
+    startDate = DateTime.now();
+    endDate = DateTime.now();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -35,7 +50,9 @@ class RequestLeaveScreen extends StatelessWidget {
                 value: selectedLeaveType,
                 hint: const Text('Select Leave Type'),
                 onChanged: (String? newValue) {
-                  selectedLeaveType = newValue;
+                  setState(() {
+                    selectedLeaveType = newValue;
+                  });
                 },
                 items: leaveTypes.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
@@ -46,8 +63,17 @@ class RequestLeaveScreen extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'Leave Type',
                   prefixIcon: const Icon(Icons.category),
-                  border: OutlineInputBorder(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
                   ),
                 ),
               ),
@@ -59,12 +85,31 @@ class RequestLeaveScreen extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'Start Date',
                   prefixIcon: const Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
                   ),
                 ),
+                controller: TextEditingController(
+                  text: startDate != null
+                      ? "${startDate!.day}/${startDate!.month}/${startDate!.year}"
+                      : '',
+                ),
                 onTap: () async {
-                  startDate = await _selectDate(context);
+                  final pickedDate = await _selectDate(context);
+                  if (pickedDate != null) {
+                    setState(() {
+                      startDate = pickedDate;
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 16),
@@ -75,14 +120,101 @@ class RequestLeaveScreen extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'End Date',
                   prefixIcon: const Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
                   ),
                 ),
+                controller: TextEditingController(
+                  text: endDate != null
+                      ? "${endDate!.day}/${endDate!.month}/${endDate!.year}"
+                      : '',
+                ),
                 onTap: () async {
-                  endDate = await _selectDate(context);
+                  final pickedDate = await _selectDate(context);
+                  if (pickedDate != null) {
+                    setState(() {
+                      endDate = pickedDate;
+                    });
+                  }
                 },
               ),
+              const SizedBox(height: 16),
+
+              // Leave Duration Radio Buttons
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black, width: 0.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Leave for",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Row(
+                          children: [
+                            Radio<LeaveDuration>(
+                              value: LeaveDuration.morning,
+                              groupValue: selectedDuration,
+                              onChanged: (LeaveDuration? value) {
+                                setState(() {
+                                  selectedDuration = value;
+                                });
+                              },
+                            ),
+                            const Text("Morning"),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Radio<LeaveDuration>(
+                              value: LeaveDuration.afternoon,
+                              groupValue: selectedDuration,
+                              onChanged: (LeaveDuration? value) {
+                                setState(() {
+                                  selectedDuration = value;
+                                });
+                              },
+                            ),
+                            const Text("Afternoon"),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Radio<LeaveDuration>(
+                              value: LeaveDuration.fullDay,
+                              groupValue: selectedDuration,
+                              onChanged: (LeaveDuration? value) {
+                                setState(() {
+                                  selectedDuration = value;
+                                });
+                              },
+                            ),
+                            const Text("Full Day"),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 16),
 
               // Reason TextField
@@ -92,8 +224,17 @@ class RequestLeaveScreen extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'Reason for Leave',
                   prefixIcon: const Icon(Icons.description),
-                  border: OutlineInputBorder(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 0.5),
                   ),
                 ),
               ),
@@ -104,7 +245,6 @@ class RequestLeaveScreen extends StatelessWidget {
                 text: 'Submit Request',
                 onPressed: () {
                   // Handle the submission logic here
-                  // You can add validations and send the request to your backend
                   Get.snackbar('Request Submitted',
                       'Your leave request has been submitted.',
                       snackPosition: SnackPosition.BOTTOM);

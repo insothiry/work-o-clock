@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:work_o_clock/src/screens/bottom_navigation/admin_bottom_navigation.dart';
 import 'package:work_o_clock/src/screens/bottom_navigation/bottom_navigation.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 import 'package:work_o_clock/src/widgets/base_button.dart';
@@ -7,6 +8,9 @@ class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final ValueNotifier<String> selectedRole = ValueNotifier<String>('Employee');
+
+  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +18,12 @@ class LoginScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(30),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo
-              const Icon(Icons.lock_outline,
-                  size: 100, color: BaseColors.primaryColor),
-              const SizedBox(height: 16),
+              Image.asset('assets/images/login-img.jpg'),
 
               // Title
               const Text(
@@ -85,9 +87,39 @@ class LoginScreen extends StatelessWidget {
                           return 'Please enter your password';
                         }
                         if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                          return 'Incorrect Password!';
                         }
                         return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Role Selection
+                    ValueListenableBuilder<String>(
+                      valueListenable: selectedRole,
+                      builder: (context, value, child) {
+                        return DropdownButtonFormField<String>(
+                          value: value,
+                          items: ['Employee', 'Admin']
+                              .map(
+                                (role) => DropdownMenuItem(
+                                  value: role,
+                                  child: Text(role),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (role) {
+                            if (role != null) {
+                              selectedRole.value = role;
+                            }
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Select Role',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -96,16 +128,26 @@ class LoginScreen extends StatelessWidget {
                     BaseButton(
                       text: 'Login',
                       onPressed: () {
-                        //  if (_formKey.currentState?.validate() == true) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const BottomNavigation()),
-                        );
-                        // }
+                        if (_formKey.currentState?.validate() == true) {
+                          // Pass role and navigate accordingly
+                          if (selectedRole.value == 'Employee') {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const BottomNavigation()),
+                            );
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AdminBottomNavigation()),
+                            );
+                          }
+                        }
                       },
                     ),
-
                     const SizedBox(height: 16),
 
                     // Forgot Password link

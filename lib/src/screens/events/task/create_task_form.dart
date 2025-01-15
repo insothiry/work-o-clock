@@ -54,6 +54,7 @@ class CreateTaskForm extends StatelessWidget {
         const Text(
           'Create New Task',
           style: TextStyle(
+            color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -84,7 +85,7 @@ class CreateTaskForm extends StatelessWidget {
   Widget _buildSwitchTile() {
     return Container(
       decoration: _buildBoxDecoration(),
-      child: SwitchTile(title: 'All Day'),
+      child: const SwitchTile(title: 'All Day'),
     );
   }
 
@@ -175,13 +176,9 @@ class CreateTaskForm extends StatelessWidget {
                     color: BaseColors.primaryColor),
                 onPressed: controller.pickAttachment,
               ),
-              Expanded(
-                child: Text(
-                  controller.attachmentsController.text.isEmpty
-                      ? 'Attachments'
-                      : controller.attachmentsController.text,
-                  style: const TextStyle(fontSize: 16),
-                ),
+              const Text(
+                'Attachments',
+                style: TextStyle(color: Colors.black),
               ),
             ],
           ),

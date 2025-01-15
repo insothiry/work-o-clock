@@ -15,44 +15,50 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: Row(
-        children: [
-          CircleAvatar(
-            backgroundImage: AssetImage(imageUrl),
-            radius: 20,
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(color: Colors.white),
-              ),
-              Text(
-                position,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(20),
+        bottomRight: Radius.circular(20),
+      ),
+      child: AppBar(
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: AssetImage(imageUrl),
+              radius: 20,
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Text(
+                  position,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+        centerTitle: true,
+        backgroundColor: BaseColors.primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.notifications,
+              color: Colors.white,
+              size: 30,
+            ),
+            onPressed: () {
+              // Handle notification button press
+              _showSnackBar(context, 'Notifications');
+            },
           ),
         ],
       ),
-      centerTitle: true,
-      backgroundColor: BaseColors.primaryColor,
-      actions: [
-        IconButton(
-          icon: const Icon(
-            Icons.notifications,
-            color: Colors.white,
-            size: 30,
-          ),
-          onPressed: () {
-            // Handle notification button press
-            _showSnackBar(context, 'Notifications');
-          },
-        ),
-      ],
     );
   }
 
@@ -65,5 +71,5 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 10);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:work_o_clock/src/screens/chat/group_chat_screen.dart';
 
 class ChatListScreen extends StatelessWidget {
   const ChatListScreen({Key? key}) : super(key: key);
@@ -69,7 +70,15 @@ class ChatListScreen extends StatelessWidget {
             trailing:
                 Text(chat.time, style: const TextStyle(color: Colors.grey)),
             onTap: () {
-              // Handle chat tap
+              // Navigate to the group chat screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupChatScreen(
+                    chatTitle: chat.title,
+                  ),
+                ),
+              );
             },
           );
         },

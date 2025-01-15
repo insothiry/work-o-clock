@@ -84,7 +84,7 @@ class CreateMeetingForm extends StatelessWidget {
   Widget _buildSwitchTile() {
     return Container(
       decoration: _buildBoxDecoration(),
-      child: SwitchTile(title: 'All Day'),
+      child: const SwitchTile(title: 'All Day'),
     );
   }
 
