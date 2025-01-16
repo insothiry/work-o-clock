@@ -138,8 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 10.0),
+                  const SizedBox(height: 20.0),
                   _buildWorkTimeInfo(),
+                  const SizedBox(height: 10.0),
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -340,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         // Formatted Date
         Text(
-          "${_formatDate(DateTime.now())}",
+          _formatDate(DateTime.now()),
           style: const TextStyle(
             fontSize: 18.0,
             fontWeight: FontWeight.bold,
@@ -353,48 +354,62 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Container(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(20),
               ),
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "1st Clock-In: $firstClockIn",
-                    style: const TextStyle(fontSize: 16.0),
-                  ),
-                  const SizedBox(height: 5.0),
-                  Text(
-                    "1st Clock-Out: $firstClockOut",
-                    style: const TextStyle(fontSize: 16.0),
-                  ),
-                ],
+              child: Text(
+                firstClockIn,
+                style: const TextStyle(fontSize: 16.0),
               ),
             ),
+
+            const Icon(Icons.arrow_forward),
             // Second Clock In/Out Container
             Container(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(20),
               ),
               margin: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "2nd Clock-In: $secondClockIn",
-                    style: const TextStyle(fontSize: 16.0),
-                  ),
-                  const SizedBox(height: 5.0),
-                  Text(
-                    "2nd Clock-Out: $secondClockOut",
-                    style: const TextStyle(fontSize: 16.0),
-                  ),
-                ],
+              child: Text(
+                firstClockOut,
+                style: const TextStyle(fontSize: 16.0),
+              ),
+            ),
+          ],
+        ),
+
+        // First Clock In/Out Container
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                secondClockIn,
+                style: const TextStyle(fontSize: 16.0),
+              ),
+            ),
+
+            const Icon(Icons.arrow_forward),
+            // Second Clock In/Out Container
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                secondClockOut,
+                style: const TextStyle(fontSize: 16.0),
               ),
             ),
           ],

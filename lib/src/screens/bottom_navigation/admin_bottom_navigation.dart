@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:work_o_clock/src/screens/admin/company/my_company_screen.dart';
 import 'package:work_o_clock/src/screens/admin/dashboard/dashboard_screen.dart';
 import 'package:work_o_clock/src/screens/attendance/attendance_screen.dart';
 import 'package:work_o_clock/src/screens/calendar/calendar_screen.dart';
@@ -20,7 +21,7 @@ class AdminBottomNavigationState extends State<AdminBottomNavigation> {
   final List<Widget> _widgetOptions = <Widget>[
     DashboardScreen(),
     CalendarScreen(),
-    const PayrollScreen(),
+    const MyCompanyScreen(),
     const AttendanceScreen(),
     const ProfileScreen(),
   ];
@@ -62,7 +63,7 @@ class AdminBottomNavigationState extends State<AdminBottomNavigation> {
       case 1:
         return 'Calendar';
       case 2:
-        return 'Payroll';
+        return 'My Company';
       case 3:
         return 'Attendance';
       case 4:
@@ -92,7 +93,7 @@ class AdminBottomNavigationState extends State<AdminBottomNavigation> {
       case 1:
         return Icons.event;
       case 2:
-        return Icons.payment;
+        return Icons.work;
       case 3:
         return Icons.people;
       case 4:
