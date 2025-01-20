@@ -1,126 +1,170 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class AttendanceDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> employee;
+import 'package:shared_preferences/shared_preferences.dart';
 
-  const AttendanceDetailScreen({super.key, required this.employee});
+class AttendanceDetailScreen extends StatefulWidget {
+  final String employeeId;
+
+  const AttendanceDetailScreen({super.key, required this.employeeId});
+
+  @override
+  State<AttendanceDetailScreen> createState() => _AttendanceDetailScreenState();
+}
+
+class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
+  Map<String, dynamic>? employee;
+  List<Map<String, dynamic>> attendanceHistory = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    print('Employee ID: ${widget.employeeId}');
+    fetchAttendanceDetails();
+  }
+
+  Future<void> fetchAttendanceDetails() async {
+    String url =
+        'http://localhost:3000/api/attendances/record/${widget.employeeId}';
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final attendanceRecords =
+            data['data'] ?? []; // Adjusted to access 'data'
+
+        if (attendanceRecords.isNotEmpty) {
+          final user = attendanceRecords
+              .first['user']; // Accessing user info from the first record
+
+          if (mounted) {
+            setState(() {
+              employee = user;
+              attendanceHistory = attendanceRecords
+                  .map<Map<String, dynamic>>((record) => {
+                        'date': DateTime.parse(record['clockIn'])
+                            .toLocal()
+                            .toString()
+                            .split(' ')[0], // Extract date
+                        'clockIn': DateTime.parse(record['clockIn'])
+                            .toLocal()
+                            .toString(), // Parse clockIn time
+                        'clockOut': DateTime.parse(record['clockOut'])
+                            .toLocal()
+                            .toString(), // Parse clockOut time
+                        'workHours': record['totalWorkHours']
+                            .toString(), // Total work hours
+                      })
+                  .toList();
+              isLoading = false;
+            });
+          }
+        } else {
+          throw Exception('No attendance records found');
+        }
+      } else {
+        throw Exception('Failed to load attendance records');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching attendance details: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Static history data
-    final List<Map<String, String>> attendanceHistory = [
-      {
-        'date': '2024-12-18',
-        'clockIn': '09:00 AM',
-        'clockOut': '05:00 PM',
-        'workHours': '8 hrs'
-      },
-      {
-        'date': '2024-12-17',
-        'clockIn': '09:15 AM',
-        'clockOut': '05:10 PM',
-        'workHours': '7 hrs 55 mins'
-      },
-      {
-        'date': '2024-12-16',
-        'clockIn': '08:45 AM',
-        'clockOut': '04:30 PM',
-        'workHours': '7 hrs 45 mins'
-      },
-    ];
-
     return Scaffold(
       appBar: AppBar(
-        title: Text("${employee['name']}'s Attendance"),
+        title: Text(employee != null
+            ? "${employee!['name']}'s Attendance"
+            : 'Attendance Details'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blue,
-                    child: Text(
-                      employee['profilePicture']!,
-                      style: const TextStyle(fontSize: 32, color: Colors.white),
-                    ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : employee == null
+              ? const Center(child: Text('No employee data found'))
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.blue,
+                              child: Text(
+                                employee!['name']![0], // First letter of name
+                                style: const TextStyle(
+                                    fontSize: 32, color: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              employee!['name'],
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const Text(
+                        'History',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: attendanceHistory.length,
+                          separatorBuilder: (context, index) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final history = attendanceHistory[index];
+                            return ListTile(
+                              title: Text(
+                                history['date']!,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Clock-In: ${history['clockIn']}'),
+                                  Text('Clock-Out: ${history['clockOut']}'),
+                                  Text('Work Hours: ${history['workHours']}'),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${employee['name']}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "Today's Attendance",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Attendance: ${employee['attendance']}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            if (employee['clockIn'] != null &&
-                employee['clockOut'] != null) ...[
-              Text(
-                'Clock-In Time: ${employee['clockIn']}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Clock-Out Time: ${employee['clockOut']}',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ] else
-              const Text(
-                'Clock-In and Clock-Out times not available',
-                style: TextStyle(fontSize: 16, color: Colors.red),
-              ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const Text(
-              'History',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            // History List
-            Expanded(
-              child: ListView.separated(
-                itemCount: attendanceHistory.length,
-                separatorBuilder: (context, index) => const Divider(),
-                itemBuilder: (context, index) {
-                  final history = attendanceHistory[index];
-                  return ListTile(
-                    title: Text(
-                      history['date']!,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Clock-In: ${history['clockIn']}'),
-                        Text('Clock-Out: ${history['clockOut']}'),
-                        Text('Work Hours: ${history['workHours']}'),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
     );
   }
 }

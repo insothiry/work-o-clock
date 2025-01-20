@@ -1,11 +1,23 @@
 class Holiday {
   final String title;
   final String date;
-  final String details;
 
   Holiday({
     required this.title,
     required this.date,
-    required this.details,
   });
+
+  factory Holiday.fromJson(Map<String, dynamic> json) {
+    return Holiday(
+      title: json['name'],
+      date: json['date'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'date': date,
+    };
+  }
 }

@@ -82,7 +82,7 @@ class _LocationScreenState extends State<LocationScreen> {
                           child: FlutterMap(
                             options: MapOptions(
                               center: const LatLng(11.5465, 104.9403),
-                              zoom: 13,
+                              zoom: 18,
                               onTap: (tapPosition, location) {
                                 setState(() {
                                   selectedLocation = location;

@@ -1,35 +1,35 @@
-// ignore_for_file: avoid_print, library_prefixes
-
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
   late IO.Socket socket;
 
-  // A callback to notify when a new message is received
-  Function(String message)? onMessageReceived;
-
-  void connect() {
+  // Initialize the socket connection
+  void connectSocket(String token) {
+    // Create and configure the socket
     socket = IO.io('http://localhost:3000', <String, dynamic>{
       'transports': ['websocket'],
-      'autoConnect': true,
+      'auth': {'token': token},
     });
 
-    socket.onConnect((_) {
-      print('Connected');
+    // Handle connection success
+    socket.on('connect', (_) {
+      print('Connected to the server.');
     });
 
-    socket.onDisconnect((_) {
-      print('Disconnected');
+    // Handle connection errors
+    socket.on('connect_error', (data) {
+      print('Connection failed: ${data.toString()}');
     });
 
-    // Listen for incoming messages
-    socket.on('receive_message', (data) {
-      onMessageReceived?.call(data);
+    // Listen for custom notifications
+    socket.onAny((event, data) {
+      print('Event: $event, Data: $data');
     });
   }
 
-  // Method to send messages
-  void sendMessage(String message) {
-    socket.emit('send_message', message);
+  // Disconnect the socket
+  void disconnectSocket() {
+    socket.disconnect();
+    print('Socket disconnected.');
   }
 }

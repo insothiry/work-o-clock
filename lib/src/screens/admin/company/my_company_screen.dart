@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:work_o_clock/src/screens/admin/company/department_screen.dart';
 import 'package:work_o_clock/src/screens/admin/company/employee_screen.dart';
 import 'package:work_o_clock/src/screens/admin/company/update_company_screen.dart';
-import 'package:work_o_clock/src/screens/profile/change_password_screen.dart';
+import 'package:work_o_clock/src/screens/admin/company/update_location.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
 class MyCompanyScreen extends StatefulWidget {
@@ -92,7 +92,7 @@ class _MyCompanyScreenState extends State<MyCompanyScreen> {
       "icon": Icons.location_on,
       "title": "Locations",
       "onTap": () {
-        Get.to(const ChangePasswordScreen());
+        Get.to(const UpdateLocationScreen());
       },
     },
     {
@@ -106,7 +106,6 @@ class _MyCompanyScreenState extends State<MyCompanyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: const Text('My Company'),
         actions: [
           IconButton(
@@ -122,7 +121,7 @@ class _MyCompanyScreenState extends State<MyCompanyScreen> {
           : companyData == null
               ? const Center(child: Text('Failed to load company details.'))
               : RefreshIndicator(
-                  onRefresh: fetchCompanyDetails, // Trigger pull-to-refresh
+                  onRefresh: fetchCompanyDetails,
                   child: SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),

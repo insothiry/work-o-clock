@@ -3,7 +3,6 @@ import 'package:work_o_clock/src/screens/admin/company/my_company_screen.dart';
 import 'package:work_o_clock/src/screens/admin/dashboard/dashboard_screen.dart';
 import 'package:work_o_clock/src/screens/attendance/attendance_screen.dart';
 import 'package:work_o_clock/src/screens/calendar/calendar_screen.dart';
-import 'package:work_o_clock/src/screens/payment/payroll_screen.dart';
 import 'package:work_o_clock/src/screens/profile/profile_screen.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 

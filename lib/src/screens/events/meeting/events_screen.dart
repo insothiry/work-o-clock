@@ -119,12 +119,13 @@ class EventsScreen extends StatelessWidget {
   // General method to show modal bottom sheet
   void _showBottomSheet(BuildContext context, Widget form) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
+      elevation: 0,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(

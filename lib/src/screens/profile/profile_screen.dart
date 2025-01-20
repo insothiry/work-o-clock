@@ -1,7 +1,9 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:work_o_clock/src/controller/theme_controller.dart';
+import 'package:work_o_clock/src/screens/login/login_screen.dart';
 import 'package:work_o_clock/src/screens/profile/add_account_screen.dart';
 import 'package:work_o_clock/src/screens/profile/change_password_screen.dart';
 import 'package:work_o_clock/src/screens/profile/edit_profile_screen.dart';
@@ -17,22 +19,86 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ThemeController themeController = Get.put(ThemeController());
+
   bool isDarkMode = false;
   String selectedLanguage = "English";
   String activeAccountType = "Admin";
   List<String> accounts = ["Admin", "Employee"];
+  String? name;
+  String? role;
+  String? email;
+  String? phone;
 
   @override
   void initState() {
     super.initState();
-    isDarkMode = Get.isDarkMode;
+    themeController.isDarkMode.value = Get.isDarkMode;
+    _loadProfileDetails();
   }
 
   void _toggleDarkMode(bool value) {
+    themeController.toggleDarkMode();
+  }
+
+  Future<void> _loadProfileDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      isDarkMode = value;
+      name = prefs.getString('userName') ?? 'Unknown User';
+      role = prefs.getString('role') ?? 'Unknown Role';
+      email = prefs.getString('email') ?? 'unknown@example.com';
+      phone = prefs.getString('phone') ?? '';
     });
-    Get.changeThemeMode(isDarkMode ? ThemeMode.dark : ThemeMode.light);
+  }
+
+  Future<void> _logout() async {
+    String url = 'http://localhost:3000/api/auth/logout';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    if (token == null) {
+      // Handle case where there is no token
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No active session found')),
+      );
+      return;
+    }
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      Navigator.pop(context); // Close the loading dialog
+
+      if (response.statusCode == 200) {
+        // On successful logout, clear the token and navigate to login
+        await prefs.remove('token');
+        Get.offAll(LoginScreen());
+      } else {
+        throw Exception('Failed to logout');
+      }
+    } catch (e) {
+      Get.back();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error logging out: $e')),
+      );
+    }
   }
 
   void _showSwitchAccountBottomSheet(BuildContext context) {
@@ -50,6 +116,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ];
 
     showModalBottomSheet(
+      backgroundColor: Colors.white,
+      elevation: 0,
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -127,7 +195,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: const Text('Profile'),
         actions: [
           IconButton(
@@ -149,24 +216,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundImage: AssetImage('assets/images/iu_pf.jpg'),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Naksu In',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                name ?? '',
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Senior Mobile Developer',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+              Text(
+                role ?? '',
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'haein@melonpeach.com',
-                style: TextStyle(fontSize: 16),
+              Text(
+                email ?? '',
+                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 4),
-              const Text(
-                '+855 11 999 777',
-                style: TextStyle(fontSize: 16),
+              Text(
+                phone ?? '',
+                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 32),
               const Divider(),
@@ -246,18 +314,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-}
 
-void _showLogoutConfirmationDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return LogoutConfirmDialog(
-        title: 'Confirm Logout',
-        content: 'Are you sure you want to logout?',
-        onConfirm: () {},
-        onCancel: () {},
-      );
-    },
-  );
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return LogoutConfirmDialog(
+          title: 'Confirm Logout',
+          content: 'Are you sure you want to logout?',
+          onConfirm: () {
+            Navigator.pop(context); // Close the dialog
+            _logout();
+          },
+          onCancel: () {
+            Navigator.pop(context); // Close the dialog
+          },
+        );
+      },
+    );
+  }
 }

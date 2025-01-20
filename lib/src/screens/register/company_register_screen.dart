@@ -217,7 +217,7 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                           child: FlutterMap(
                             options: MapOptions(
                               center: const LatLng(11.5465, 104.9403),
-                              zoom: 13,
+                              zoom: 18,
                               onTap: (tapPosition, LatLng location) {
                                 setState(() {
                                   selectedLocation = location;

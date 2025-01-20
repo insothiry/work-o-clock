@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:work_o_clock/src/screens/admin/company/add_user_form.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
 class EmployeeScreen extends StatefulWidget {
@@ -11,22 +15,15 @@ class EmployeeScreen extends StatefulWidget {
 class _EmployeeScreenState extends State<EmployeeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final Map<String, List<String>> departmentEmployees = {
-    'Human Resources': ['Alice Johnson', 'Bob Smith'],
-    'Finance': ['Charles Brown', 'Diana Prince'],
-    'Engineering': ['Evan Taylor', 'Fiona Davis', 'George Wilson'],
-    'Marketing': ['Helen White', 'Ian Clark'],
-    'Sales': ['Jack Harris', 'Karen Lewis'],
-  };
+  List<String> departmentNames = [];
+  Map<String, List<String>> departmentEmployees = {};
+  List<String> allEmployees = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: departmentEmployees.keys.length,
-      vsync: this,
-    );
+    fetchDepartments();
   }
 
   @override
@@ -35,82 +32,183 @@ class _EmployeeScreenState extends State<EmployeeScreen>
     super.dispose();
   }
 
+  Future<void> fetchDepartments() async {
+    const String url = 'http://localhost:3000/api/companies/get-departments';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final departments = data['departments'] ?? [];
+
+        Map<String, List<String>> fetchedEmployees = {};
+        List<String> fetchedDepartmentNames = [];
+        List<String> allFetchedEmployees = [];
+
+        for (var department in departments) {
+          String departmentId = department['department']['_id'];
+          String departmentName = department['department']['name'];
+
+          // Get users for each department
+          final employeeResponse = await http.post(
+            Uri.parse(
+                'http://localhost:3000/api/users/get-users?department=$departmentId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          );
+
+          if (employeeResponse.statusCode == 200) {
+            final employeeData = jsonDecode(employeeResponse.body);
+            final users = employeeData['users'];
+
+            List<String> employeeNames = [];
+            for (var user in users) {
+              final userName = user['name'];
+              final userPosition = user['position']['title'];
+
+              // Combine name and position for display purposes
+              employeeNames.add('$userName - $userPosition');
+            }
+
+            fetchedEmployees[departmentName] = employeeNames;
+            fetchedDepartmentNames.add(departmentName);
+            allFetchedEmployees.addAll(employeeNames);
+          } else {
+            throw Exception('Failed to load employees for $departmentName');
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            departmentEmployees = fetchedEmployees;
+            departmentNames = fetchedDepartmentNames;
+            allEmployees = allFetchedEmployees;
+            isLoading = false;
+
+            // Initialize TabController only after data is fetched
+            _tabController = TabController(
+              length: departmentNames.length + 1, // +1 for the "All" tab
+              vsync: this,
+            );
+          });
+        }
+      } else {
+        throw Exception('Failed to load departments');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching departments: $e')),
+      );
+    }
+  }
+
+  void _showAddUserBottomSheet() {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return const AddUserForm();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Employees'),
-        bottom: TabBar(
-          labelColor: BaseColors.primaryColor,
-          indicatorColor: BaseColors.primaryColor,
-          controller: _tabController,
-          isScrollable: true,
-          tabs: departmentEmployees.keys.map((department) {
-            return Tab(
-              text: department,
-            );
-          }).toList(),
-        ),
+        bottom: isLoading
+            ? null
+            : TabBar(
+                labelColor: BaseColors.primaryColor,
+                indicatorColor: BaseColors.primaryColor,
+                controller:
+                    _tabController, // Ensure TabController is initialized
+                isScrollable: true,
+                tabs: [
+                  const Tab(text: 'All'),
+                  ...departmentNames.map((department) => Tab(text: department)),
+                ],
+              ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: departmentEmployees.keys.map((department) {
-          final employees = departmentEmployees[department]!;
-          return employees.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No employees in this department',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: employees.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      color: Colors.white,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 1,
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.blue,
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
-                        title: Text(employees[index]),
-                        subtitle: Text(department),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.grey),
-                          onPressed: () {
-                            // Handle edit employee action
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Edit ${employees[index]}')),
-                            );
-                          },
-                        ),
-                        onTap: () {
-                          // Handle tap action
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('${employees[index]} selected')),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-        }).toList(),
-      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildEmployeeList(allEmployees),
+                ...departmentNames.map((department) =>
+                    _buildEmployeeList(departmentEmployees[department] ?? [])),
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: BaseColors.primaryColor,
-        onPressed: () {
-          // Handle adding a new employee
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add New Employee')),
-          );
-        },
+        onPressed: _showAddUserBottomSheet,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  Widget _buildEmployeeList(List<String> employees) {
+    return employees.isEmpty
+        ? const Center(
+            child: Text(
+              'No employees in this department',
+              style: TextStyle(color: Colors.grey),
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: employees.length,
+            itemBuilder: (context, index) {
+              return Card(
+                color: Colors.white,
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 1,
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                  title: Text(employees[index]),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.grey),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Edit ${employees[index]}')),
+                      );
+                    },
+                  ),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${employees[index]} selected')),
+                    );
+                  },
+                ),
+              );
+            },
+          );
   }
 }

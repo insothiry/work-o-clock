@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:work_o_clock/src/screens/bottom_navigation/admin_bottom_navigation.dart';
@@ -29,10 +30,11 @@ class LoginScreen extends StatelessWidget {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        print("mi jkj: $data");
+        print("Response Data: $data");
 
         final String token = data['token'];
         final String role = data['user']['role'];
+        final Map<String, dynamic> leaveBalance = data['user']['leaveBalance'];
 
         // Save token and user details locally
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -43,18 +45,16 @@ class LoginScreen extends StatelessWidget {
         await prefs.setString('email', data['user']['email']);
         await prefs.setString('companyId', data['user']['company']);
 
+        // Save individual leave balances
+        await prefs.setDouble('sick', leaveBalance['sick'].toDouble());
+        await prefs.setDouble('annual', leaveBalance['annual'].toDouble());
+        await prefs.setDouble('unpaid', leaveBalance['unpaid'].toDouble());
+
         // Navigate based on role
         if (role == 'admin') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const AdminBottomNavigation()),
-          );
+          Get.offAll(const AdminBottomNavigation());
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const BottomNavigation()),
-          );
+          Get.offAll(const BottomNavigation());
         }
       } else {
         _showErrorSnackBar(context, 'Invalid credentials.');

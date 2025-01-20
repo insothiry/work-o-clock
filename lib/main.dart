@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
           iconColor: Colors.white,
           textColor: Colors.white,
         ),
-        cardTheme: const CardTheme(color: Colors.grey),
+        cardTheme: const CardTheme(color: Color.fromARGB(255, 86, 86, 86)),
         dropdownMenuTheme: const DropdownMenuThemeData(
           textStyle: TextStyle(color: Colors.white),
           inputDecorationTheme: InputDecorationTheme(
@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
             unselectedLabelColor: Colors.white,
             labelColor: Colors.blue),
         appBarTheme: AppBarTheme(
-            backgroundColor: Colors.grey[900],
+            backgroundColor: const Color.fromARGB(255, 57, 56, 56),
             titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
             actionsIconTheme: const IconThemeData(color: Colors.white),
             iconTheme: const IconThemeData(color: Colors.white)),
@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
             unselectedItemColor: Colors.white),
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: BaseColors.secondaryColor)
-            .copyWith(background: Colors.grey[900]),
+            .copyWith(background: const Color.fromARGB(255, 57, 56, 56)),
       ),
       themeMode: ThemeMode.system,
       home: const SplashScreen(),
