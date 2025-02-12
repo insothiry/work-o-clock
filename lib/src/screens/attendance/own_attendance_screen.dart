@@ -78,9 +78,6 @@ class _OwnAttendanceScreenState extends State<OwnAttendanceScreen> {
           isLoading = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching attendance details: $e')),
-      );
     }
   }
 

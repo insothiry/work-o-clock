@@ -1,256 +1,20 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:work_o_clock/src/controller/dashboard_controller.dart';
+import 'package:work_o_clock/src/models/request_card_model.dart';
+import 'package:work_o_clock/src/screens/notifications/notification_screen.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  DashboardScreenState createState() => DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
-  int totalEmployees = 0;
-  int totalDepartments = 0;
-  bool _isLoading = false;
-  List<Map<String, dynamic>> pendingRequests = [];
-  List<Map<String, dynamic>> pendingRequestsOT = [];
-  List<Map<String, dynamic>> approvedOTRequests = [];
-  List<Map<String, dynamic>> activities = [];
-  List<Map<String, dynamic>> approvedLeaveRequests = [];
-  List<Map<String, dynamic>> allRequests = [];
-  List<Map<String, dynamic>> allOTRequests = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchDashboardData();
-    fetchAllRequests();
-    fetchAllOTRequests();
-  }
-
-  String _formatDate(String isoDate) {
-    final DateTime parsedDate = DateTime.parse(isoDate);
-    return '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> fetchDashboardData() async {
-    try {
-      // Fetch total employees
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      const String url = 'http://localhost:3000/api/users/get-users';
-
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-      final userResponse = await http.post(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      if (userResponse.statusCode == 200) {
-        final usersData = json.decode(userResponse.body);
-        setState(() {
-          totalEmployees = usersData['totalUsers'] ?? 0;
-        });
-      }
-      print("all employees $totalEmployees");
-
-      // Fetch total departments
-      final departmentResponse = await http.get(
-        Uri.parse('http://localhost:3000/api/companies/get-departments'),
-        headers: headers,
-      );
-      if (departmentResponse.statusCode == 200) {
-        final departmentsData = json.decode(departmentResponse.body);
-        print("total departments $departmentsData");
-        setState(() {
-          totalDepartments = departmentsData['totalDepartments'] ?? 0;
-        });
-      } else
-        print("total departmentssss");
-    } catch (e) {
-      // Handle errors
-      print('Error fetching data: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching dashboard data')),
-      );
-    }
-  }
-
-  Future<void> fetchAllRequests() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      final String url =
-          'http://localhost:3000/api/leaves/get-all-leave-requests';
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        setState(() {
-          allRequests = List<Map<String, dynamic>>.from(jsonData['data']);
-        });
-        print("All requests: ${pendingRequests.toString()}");
-        filterApprovedRequests();
-        filterPendingRequests();
-      } else {
-        print('Error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching pending requests: $e');
-    }
-  }
-
-  void filterApprovedRequests() {
-    setState(() {
-      approvedLeaveRequests = allRequests
-          .where((request) => request['status'] == 'approved')
-          .toList();
-    });
-  }
-
-  void filterPendingRequests() {
-    setState(() {
-      pendingRequests = allRequests
-          .where((request) => request['status'] == 'pending')
-          .toList();
-    });
-  }
-
-  void filterApprovedOTRequests() {
-    setState(() {
-      approvedOTRequests = allOTRequests
-          .where((request) => request['status'] == 'approved')
-          .toList();
-    });
-  }
-
-  void filterPendingOTRequests() {
-    setState(() {
-      pendingRequestsOT = allOTRequests
-          .where((request) => request['status'] == 'pending')
-          .toList();
-    });
-  }
-
-  Future<void> fetchAllOTRequests() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      final String url =
-          'http://localhost:3000/api/overtimes/get-all-overtime-requests';
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        setState(() {
-          allOTRequests = List<Map<String, dynamic>>.from(jsonData['data']);
-        });
-        filterApprovedOTRequests();
-        filterPendingOTRequests();
-        print("Pending requests: ${allOTRequests.toString()}");
-      } else {
-        print('Error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching pending requests: $e');
-    }
-  }
-
-  Future<void> acceptLeaveRequest(String leaveId) async {
-    setState(() {
-      _isLoading = true; // Start loading
-    });
-
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      final String url =
-          'http://localhost:3000/api/leaves/accept-leave/$leaveId';
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-      final response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        fetchAllRequests();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Leave approved'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        print('Error accepting leave request: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error accepting leave request: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> acceptOTRequest(String overtimeId) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      final String url =
-          'http://localhost:3000/api/overtimes/accept-overtime/$overtimeId';
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-      final response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        fetchAllOTRequests();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Overtime approved'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        print('Error accepting overtime request: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error accepting overtime request: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
+class DashboardScreenState extends State<DashboardScreen> {
+  DashboardController controller = Get.put(DashboardController());
 
   @override
   Widget build(BuildContext context) {
@@ -265,16 +29,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Get.to(const NotificationScreen());
+            },
           ),
         ],
       ),
       backgroundColor: BaseColors.primaryColor,
       body: RefreshIndicator(
         onRefresh: () async {
-          await fetchDashboardData();
-          await fetchAllRequests();
-          await fetchAllOTRequests();
+          await controller.fetchDashboardData();
+          await controller.fetchAllRequests();
+          await controller.fetchAllOTRequests();
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(top: 10),
@@ -367,11 +133,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildInfoCard(
-                            'Employees', totalEmployees.toString()),
+                            'Employees', controller.totalEmployees.toString()),
                       ),
                       Expanded(
-                        child: _buildInfoCard(
-                            'Departments', totalDepartments.toString()),
+                        child: _buildInfoCard('Departments',
+                            controller.totalDepartments.toString()),
                       ),
                       Expanded(
                         child: _buildInfoCard('Positions', '140'),
@@ -388,7 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 16),
                   // Display leave activities
-                  ...approvedLeaveRequests.map(
+                  ...controller.approvedLeaveRequests.map(
                     (approvedLeaveRequests) => Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -423,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                  ...approvedOTRequests.map(
+                  ...controller.approvedOTRequests.map(
                     (approvedOTRequests) => Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -469,14 +235,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 16),
                   // Display pending leave requests with Accept/Reject buttons
 
-                  if (_isLoading)
+                  if (controller.isLoadingOT.value)
                     Container(
                       color: BaseColors.primaryColor,
                       child: const Center(
                         child: CircularProgressIndicator(),
                       ),
                     )
-                  else if (pendingRequests.isEmpty)
+                  else if (controller.pendingRequests.isEmpty)
                     const Center(
                       child: Text(
                         "No leave requests",
@@ -487,15 +253,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     )
                   else
-                    ...pendingRequests.map((request) => RequestCard(
+                    ...controller.pendingRequests.map((request) => RequestCard(
                           userName: request['user']['name'],
                           status: request['status'],
                           reason: request['reason'],
                           duration: request['duration'],
-                          startDate: _formatDate(request['startDate']),
-                          endDate: _formatDate(request['endDate']),
+                          startDate:
+                              controller.formatDate(request['startDate']),
+                          endDate: controller.formatDate(request['endDate']),
                           leaveId: request['_id'],
-                          onAccept: acceptLeaveRequest,
+                          onAccept: controller.acceptLeaveRequest,
                         )),
                   const SizedBox(height: 20),
                   const Text(
@@ -507,14 +274,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 16),
                   // Display pending OT requests
-                  if (_isLoading)
+                  if (controller.isLoadingOT.value)
                     Container(
                       color: BaseColors.primaryColor,
                       child: const Center(
                         child: CircularProgressIndicator(),
                       ),
                     )
-                  else if (pendingRequestsOT.isEmpty)
+                  else if (controller.pendingRequestsOT.isEmpty)
                     const Center(
                       child: Text(
                         "No overtime requests",
@@ -525,16 +292,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     )
                   else
-                    ...pendingRequestsOT.map((request) => RequestCard(
-                          userName: request['user']['name'],
-                          status: request['status'],
-                          reason: request['reason'],
-                          duration: request['hours'].toString(),
-                          startDate: _formatDate(request['date']),
-                          endDate: _formatDate(request['date']),
-                          leaveId: request['_id'],
-                          onAccept: acceptOTRequest,
-                        )),
+                    ...controller.pendingRequestsOT
+                        .map((request) => RequestCard(
+                              userName: request['user']['name'],
+                              status: request['status'],
+                              reason: request['reason'],
+                              duration: request['hours'].toString(),
+                              startDate: controller.formatDate(request['date']),
+                              endDate: controller.formatDate(request['date']),
+                              leaveId: request['_id'],
+                              onAccept: controller.acceptOTRequest,
+                            )),
                 ],
               ),
             ),
@@ -613,105 +381,4 @@ Widget _buildInfoCard(String title, String data) {
       ),
     ),
   );
-}
-
-// Widget for displaying a single request
-class RequestCard extends StatelessWidget {
-  final String userName;
-  final String status;
-  final String reason;
-  final String duration;
-  final String startDate;
-  final String endDate;
-  final String leaveId; // Add leaveId to the constructor
-  final Function(String) onAccept; // Callback for accepting leave
-
-  const RequestCard({
-    Key? key,
-    required this.userName,
-    required this.status,
-    required this.reason,
-    required this.duration,
-    required this.startDate,
-    required this.endDate,
-    required this.leaveId, // Initialize leaveId
-    required this.onAccept, // Initialize callback
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      color: Colors.grey[100],
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$userName - $status',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Reason: $reason',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              'Duration: $duration',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              'From: $startDate to $endDate',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    onAccept(leaveId);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: BaseColors.primaryColor),
-                  child: const Text(
-                    'Accept',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    // Reject action
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                  ),
-                  child: const Text(
-                    'Reject',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

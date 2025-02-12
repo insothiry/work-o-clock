@@ -132,9 +132,6 @@ class _AddUserFormState extends State<AddUserForm> {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching departments: $e')),
-      );
     }
   }
 
@@ -251,8 +248,7 @@ class _AddUserFormState extends State<AddUserForm> {
                         items: selectedDepartment != null
                             ? departmentJobs[selectedDepartment]!
                                 .map((job) => DropdownMenuItem(
-                                      value:
-                                          job['id'], // Use job ID as the value
+                                      value: job['id'],
                                       child: Text(job['title'] ?? ''),
                                     ))
                                 .toList()

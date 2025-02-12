@@ -60,7 +60,6 @@ class _MyCompanyScreenState extends State<MyCompanyScreen> {
       setState(() {
         isLoading = false;
       });
-      _showErrorSnackBar('Error fetching company details: $e');
     }
   }
 

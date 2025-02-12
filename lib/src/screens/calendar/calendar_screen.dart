@@ -130,7 +130,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Add Vacation Day',
+                    'Add Event',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

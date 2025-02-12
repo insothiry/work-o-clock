@@ -108,7 +108,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
       setState(() {
         isLoading = false;
       });
-      _showErrorSnackBar('Error fetching departments: $e');
     }
   }
 

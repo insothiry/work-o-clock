@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:work_o_clock/src/screens/attendance/attendance_screen.dart';
 import 'package:work_o_clock/src/screens/attendance/own_attendance_screen.dart';
 import 'package:work_o_clock/src/screens/calendar/calendar_screen.dart';
 import 'package:work_o_clock/src/screens/home/home_screen.dart';

@@ -111,9 +111,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           isLoading = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching departments: $e')),
-      );
     }
   }
 
@@ -148,11 +145,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       } else {
         throw Exception('Failed to load attendance records');
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching attendance records: $e')),
-      );
-    }
+    } catch (e) {}
   }
 
   @override
@@ -201,14 +194,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         },
                       ),
                     ),
-                    // Today's date
                   ],
                 ),
-                // Wrap ListView in Expanded to avoid layout issues
                 Expanded(
-                  child: _buildEmployeeList(selectedDepartment == 'All'
-                      ? allEmployees
-                      : departmentEmployees[selectedDepartment] ?? []),
+                  child: RefreshIndicator(
+                    onRefresh:
+                        fetchDepartments, // Call the existing fetch logic
+                    child: _buildEmployeeList(selectedDepartment == 'All'
+                        ? allEmployees
+                        : departmentEmployees[selectedDepartment] ?? []),
+                  ),
                 ),
               ],
             ),
@@ -244,9 +239,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   title: Text(employeeName),
                   trailing: Text(
-                    status, // Show attendance status (e.g., "late")
+                    status, // Show attendance status (e.g., "late", "No record")
                     style: TextStyle(
-                      color: status == 'late' ? Colors.red : Colors.green,
+                      color: status == 'late'
+                          ? Colors.red
+                          : status == 'No record'
+                              ? Colors.grey
+                              : Colors.green,
                     ),
                   ),
                   onTap: () {

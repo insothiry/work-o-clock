@@ -323,6 +323,8 @@ class _CompanyRegisterScreenState extends State<CompanyRegisterScreen> {
                                 body: jsonData,
                               );
 
+                              print('Registration: ${jsonData}');
+
                               // Handle the response
                               if (response.statusCode == 200 ||
                                   response.statusCode == 201) {

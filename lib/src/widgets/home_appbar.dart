@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:work_o_clock/src/controller/notification_controller.dart';
 import 'package:work_o_clock/src/screens/notifications/notification_screen.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
@@ -49,36 +48,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         centerTitle: true,
         backgroundColor: BaseColors.primaryColor,
         actions: [
-          Obx(() {
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onPressed: () {
-                    Get.to(NotificationScreen());
-                  },
-                ),
-                if (Get.find<NotificationController>().notifications.isNotEmpty)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          }),
+          IconButton(
+            icon: const Icon(
+              Icons.notifications,
+              color: Colors.white,
+              size: 30,
+            ),
+            onPressed: () {
+              Get.to(() => const NotificationScreen());
+            },
+          ),
         ],
       ),
     );

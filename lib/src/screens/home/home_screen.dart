@@ -1,20 +1,12 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:work_o_clock/src/controller/notification_controller.dart';
+import 'package:work_o_clock/src/controller/home_controller.dart';
 import 'package:work_o_clock/src/screens/home/request_leave.dart';
 import 'package:work_o_clock/src/screens/home/request_ot.dart';
-import 'package:work_o_clock/src/services/socket_service.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 import 'package:work_o_clock/src/widgets/home_appbar.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,258 +16,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Timer? _timer;
-  var elapsedTime = Duration.zero.obs;
-  var isClockedIn = false.obs;
-  var clockInCount = 0.obs;
-  var clockOutCount = 0.obs;
-  var firstClockInTime = Rxn<DateTime>();
-  var firstClockOutTime = Rxn<DateTime>();
-  var secondClockInTime = Rxn<DateTime>();
-  var secondClockOutTime = Rxn<DateTime>();
-
-  late Timer _borderAnimationTimer;
-  bool _isAnimatingBorder = false;
-  late LatLng _currentLocation;
-  double _radius = 200.0;
-  bool _locationFetched = false;
-  String name = '';
-  String userToken = '';
-  final SocketService _socketService = SocketService();
-
-  Future<void> _getUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      name = prefs.getString('userName') ?? 'N/A';
-      userToken = prefs.getString('token') ?? '';
-    });
-    print("userToken: " + userToken);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    final socket = IO.io('http://localhost:3000', <String, dynamic>{
-      'transports': ['websocket'],
-      'auth': {'token': userToken},
-    });
-    Get.put(NotificationController(socket));
-
-    _initializeData();
-    _startBorderAnimation();
-    _getUserLocation();
-  }
-
-  Future<void> _initializeData() async {
-    await _getUserData();
-    _connectToSocket();
-  }
-
-  @override
-  void dispose() {
-    _borderAnimationTimer.cancel();
-    _socketService.disconnectSocket();
-    super.dispose();
-  }
-
-  void _connectToSocket() {
-    String token = userToken;
-    _socketService.connectSocket(token);
-  }
-
-  // Fetch user's current location
-  Future<void> _getUserLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      print('Location services are disabled.');
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.whileInUse &&
-          permission != LocationPermission.always) {
-        print('Location permission is denied.');
-        return;
-      }
-    }
-
-    setState(() {
-      _currentLocation = LatLng(11.5681, 104.8921);
-      _locationFetched = true;
-    });
-    print("Current loaction: " + _currentLocation.toString());
-  }
-
-  void _startBorderAnimation() {
-    _borderAnimationTimer =
-        Timer.periodic(const Duration(milliseconds: 800), (timer) {
-      if (isClockedIn.value) {
-        setState(() {
-          _isAnimatingBorder = !_isAnimatingBorder;
-        });
-      } else {
-        _borderAnimationTimer.cancel();
-      }
-    });
-  }
-
-  Future<void> _clockInRequest(double latitude, double longitude) async {
-    const String url = "http://localhost:3000/api/attendances/clock-in";
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('token');
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "latitude": latitude,
-          "longitude": longitude,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        _showSnackBar(context, "Clock-in successful!");
-        print("Response: ${response.body}");
-      } else {
-        _showSnackBar(context, "Failed to clock in. Please try again.");
-        print("Error: ${response.statusCode}, ${response.body}");
-      }
-    } catch (e) {
-      _showSnackBar(context, "An error occurred: $e");
-      print("Exception: $e");
-    }
-  }
-
-  Future<void> _clockOutRequest(double latitude, double longitude) async {
-    const String url = "http://localhost:3000/api/attendances/clock-out";
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('token');
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "latitude": latitude,
-          "longitude": longitude,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        _showSnackBar(context, "Clock-out successful!");
-        print("Response: ${response.body}");
-      } else {
-        _showSnackBar(context, "Failed to clock out. Please try again.");
-        print("Error: ${response.statusCode}, ${response.body}");
-      }
-    } catch (e) {
-      _showSnackBar(context, "An error occurred: $e");
-      print("Exception: $e");
-    }
-  }
-
-  void startTimer() {
-    elapsedTime.value = Duration.zero;
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      elapsedTime.value += const Duration(minutes: 1);
-    });
-  }
-
-  void stopTimer() {
-    _timer?.cancel();
-  }
-
-  void toggleClockInOut() {
-    final currentTime = DateTime.now();
-
-    if (!isClockedIn.value) {
-      // Clock in logic
-      if (clockInCount.value < 2) {
-        if (clockOutCount.value > 0 || clockInCount.value == 0) {
-          // Allow clocking in if clockOutCount is more than 0 (meaning clocked out at least once)
-          isClockedIn.value = true;
-          startTimer();
-          clockInCount.value++;
-
-          if (clockInCount.value == 1) {
-            firstClockInTime.value = currentTime;
-            print(
-                "Clocked in at ${currentTime.toString()}. Total clock-ins: ${clockInCount.value}");
-          } else if (clockInCount.value == 2) {
-            secondClockInTime.value = currentTime;
-            print(
-                "Clocked in at ${currentTime.toString()}. Total clock-ins: ${clockInCount.value}");
-          }
-
-          _clockInRequest(
-              _currentLocation.latitude, _currentLocation.longitude);
-        } else {
-          // If the user hasn't clocked out at all, show the message
-          print("Please clock out first before clocking in.");
-          _showSnackBar(
-              context, "You cannot clock in again without clocking out.");
-        }
-      } else {
-        print("You have already clocked in 2 times today.");
-        _showSnackBar(context, "You have already clocked in 2 times today.");
-      }
-    } else {
-      // Clock out logic
-      if (clockOutCount.value < 2) {
-        isClockedIn.value = false;
-        stopTimer();
-        clockOutCount.value++;
-
-        if (clockOutCount.value == 1) {
-          firstClockOutTime.value = currentTime;
-          print(
-              "Clocked out at ${currentTime.toString()}. Total clock-outs: ${clockOutCount.value}");
-        } else if (clockOutCount.value == 2) {
-          secondClockOutTime.value = currentTime;
-          print(
-              "Clocked out at ${currentTime.toString()}. Total clock-outs: ${clockOutCount.value}");
-        }
-
-        _clockOutRequest(_currentLocation.latitude,
-            _currentLocation.longitude); // Call clock-out request
-      } else {
-        print("You have already clocked out 2 times today.");
-        _showSnackBar(context, "You have already clocked out 2 times today.");
-      }
-    }
-  }
-
-  String get elapsedTimeString {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = twoDigits(elapsedTime.value.inHours);
-    final minutes = twoDigits(elapsedTime.value.inMinutes.remainder(60));
-    return "$hours:$minutes";
-  }
-
-  void _showSnackBar(BuildContext context, String message) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 2),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    debugPrint("Snackbar displayed with message: $message");
-  }
+  HomeController controller = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: HomeAppBar(
-        name: name,
+        name: controller.name.string,
         position: 'Mobile Developer',
         imageUrl: 'assets/images/iu_pf.jpg',
       ),
@@ -308,8 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 300.0,
                           child: FlutterMap(
                             options: MapOptions(
-                              center: _locationFetched
-                                  ? _currentLocation
+                              center: controller.locationFetched.value
+                                  ? controller.currentLocation.value
                                   : const LatLng(11.5681, 104.8921),
                               zoom: 18.0,
                             ),
@@ -320,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 subdomains: const ['a', 'b', 'c'],
                               ),
                               MarkerLayer(
-                                markers: _locationFetched
+                                markers: controller.locationFetched.value
                                     ? [
                                         const Marker(
                                           width: 80.0,
@@ -336,11 +83,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                     : [],
                               ),
                               CircleLayer(
-                                circles: _locationFetched
+                                circles: controller.locationFetched.value
                                     ? [
                                         CircleMarker(
-                                          point: _currentLocation,
-                                          radius: _radius,
+                                          point:
+                                              controller.currentLocation.value,
+                                          radius: controller.radius.value,
                                           color: Colors.blue.withOpacity(0.4),
                                           borderStrokeWidth: 2,
                                           borderColor: Colors.blue,
@@ -362,8 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: _isAnimatingBorder
-                                    ? (isClockedIn.value
+                                color: controller.isAnimatingBorder.value
+                                    ? (controller.isClockedIn.value
                                         ? BaseColors.secondaryColor
                                         : Colors.transparent)
                                     : Colors.transparent,
@@ -372,28 +120,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             child: ElevatedButton(
                               onPressed: () {
-                                toggleClockInOut();
-                                if (isClockedIn.value) {
+                                controller.toggleClockInOut();
+                                if (controller.isClockedIn.value) {
                                   // _clockInRequest(
                                   //   _currentLocation.latitude,
                                   //   _currentLocation.longitude,
                                   // );
-                                  _startBorderAnimation();
+                                  controller.startBorderAnimation();
                                 } else {
-                                  _borderAnimationTimer.cancel();
+                                  controller.borderAnimationTimer!.cancel();
                                   // _clockOutRequest(
                                   //   _currentLocation.latitude,
                                   //   _currentLocation.longitude,
                                   // );
                                   setState(() {
-                                    _isAnimatingBorder = false;
+                                    controller.isAnimatingBorder.isFalse;
                                   });
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 shape: const CircleBorder(),
                                 padding: const EdgeInsets.all(24),
-                                primary: isClockedIn.value
+                                primary: controller.isClockedIn.value
                                     ? BaseColors.secondaryColor
                                     : BaseColors.primaryColor,
                               ),
@@ -407,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 8.0),
                                   Obx(() => Text(
-                                        isClockedIn.value
+                                        controller.isClockedIn.value
                                             ? 'Clock Out'
                                             : 'Clock In',
                                         style: const TextStyle(
@@ -426,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 60.0),
                   Center(
                     child: Obx(() => Text(
-                          elapsedTimeString,
+                          controller.elapsedTimeString,
                           style: const TextStyle(
                             fontSize: 24.0,
                             fontWeight: FontWeight.bold,
@@ -480,10 +228,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Function to display clock-in/out times and work time
   Widget _buildWorkTimeInfo() {
-    final firstClockInTime = this.firstClockInTime.value;
-    final firstClockOutTime = this.firstClockOutTime.value;
-    final secondClockInTime = this.secondClockInTime.value;
-    final secondClockOutTime = this.secondClockOutTime.value;
+    final firstClockInTime = controller.firstClockInTime.value;
+    final firstClockOutTime = controller.firstClockOutTime.value;
+    final secondClockInTime = controller.secondClockInTime.value;
+    final secondClockOutTime = controller.secondClockOutTime.value;
 
     // Default time if no clock-in/out
     String firstClockIn = firstClockInTime != null
@@ -500,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : "0:00";
 
     // Display work time
-    String workTime = "Work Time: ${elapsedTimeString}";
+    String workTime = "Work Time: ${controller.elapsedTimeString}";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

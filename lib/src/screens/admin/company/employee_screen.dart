@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:work_o_clock/src/screens/admin/company/add_user_form.dart';
+import 'package:work_o_clock/src/screens/admin/company/update_employee.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
 class EmployeeScreen extends StatefulWidget {
@@ -16,8 +18,8 @@ class _EmployeeScreenState extends State<EmployeeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<String> departmentNames = [];
-  Map<String, List<String>> departmentEmployees = {};
-  List<String> allEmployees = [];
+  Map<String, List<Map<String, String>>> departmentEmployees = {};
+  List<Map<String, String>> allEmployees = [];
   bool isLoading = true;
 
   @override
@@ -51,9 +53,9 @@ class _EmployeeScreenState extends State<EmployeeScreen>
       if (response.statusCode == 200) {
         final departments = data['departments'] ?? [];
 
-        Map<String, List<String>> fetchedEmployees = {};
+        Map<String, List<Map<String, String>>> fetchedEmployees = {};
         List<String> fetchedDepartmentNames = [];
-        List<String> allFetchedEmployees = [];
+        List<Map<String, String>> allFetchedEmployees = [];
 
         for (var department in departments) {
           String departmentId = department['department']['_id'];
@@ -73,18 +75,21 @@ class _EmployeeScreenState extends State<EmployeeScreen>
             final employeeData = jsonDecode(employeeResponse.body);
             final users = employeeData['users'];
 
-            List<String> employeeNames = [];
+            List<Map<String, String>> employeeDetails = [];
             for (var user in users) {
               final userName = user['name'];
+              final userId = user['_id'];
               final userPosition = user['position']['title'];
 
-              // Combine name and position for display purposes
-              employeeNames.add('$userName - $userPosition');
+              employeeDetails.add({
+                'name': '$userName - $userPosition',
+                'id': userId,
+              });
             }
 
-            fetchedEmployees[departmentName] = employeeNames;
+            fetchedEmployees[departmentName] = employeeDetails;
             fetchedDepartmentNames.add(departmentName);
-            allFetchedEmployees.addAll(employeeNames);
+            allFetchedEmployees.addAll(employeeDetails);
           } else {
             throw Exception('Failed to load employees for $departmentName');
           }
@@ -97,9 +102,8 @@ class _EmployeeScreenState extends State<EmployeeScreen>
             allEmployees = allFetchedEmployees;
             isLoading = false;
 
-            // Initialize TabController only after data is fetched
             _tabController = TabController(
-              length: departmentNames.length + 1, // +1 for the "All" tab
+              length: departmentNames.length + 1,
               vsync: this,
             );
           });
@@ -113,9 +117,6 @@ class _EmployeeScreenState extends State<EmployeeScreen>
           isLoading = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching departments: $e')),
-      );
     }
   }
 
@@ -134,6 +135,46 @@ class _EmployeeScreenState extends State<EmployeeScreen>
     );
   }
 
+  Widget _buildEmployeeList(List<Map<String, String>> employees) {
+    return employees.isEmpty
+        ? const Center(
+            child: Text(
+              'No employees in this department',
+              style: TextStyle(color: Colors.grey),
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: employees.length,
+            itemBuilder: (context, index) {
+              final employee = employees[index];
+              return Card(
+                color: Colors.white,
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 1,
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                  title: Text(employee['name'] ?? 'Unknown'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.grey),
+                    onPressed: () {
+                      Get.to(UpdateEmployeeScreen(employeeId: employee['id']!));
+                    },
+                  ),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${employee['name']} selected')),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,8 +185,7 @@ class _EmployeeScreenState extends State<EmployeeScreen>
             : TabBar(
                 labelColor: BaseColors.primaryColor,
                 indicatorColor: BaseColors.primaryColor,
-                controller:
-                    _tabController, // Ensure TabController is initialized
+                controller: _tabController,
                 isScrollable: true,
                 tabs: [
                   const Tab(text: 'All'),
@@ -169,46 +209,5 @@ class _EmployeeScreenState extends State<EmployeeScreen>
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
-  }
-
-  Widget _buildEmployeeList(List<String> employees) {
-    return employees.isEmpty
-        ? const Center(
-            child: Text(
-              'No employees in this department',
-              style: TextStyle(color: Colors.grey),
-            ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: employees.length,
-            itemBuilder: (context, index) {
-              return Card(
-                color: Colors.white,
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 1,
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
-                  title: Text(employees[index]),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.grey),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Edit ${employees[index]}')),
-                      );
-                    },
-                  ),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${employees[index]} selected')),
-                    );
-                  },
-                ),
-              );
-            },
-          );
   }
 }

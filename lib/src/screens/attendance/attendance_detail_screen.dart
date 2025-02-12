@@ -43,12 +43,10 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final attendanceRecords =
-            data['data'] ?? []; // Adjusted to access 'data'
+        final attendanceRecords = data['data'] ?? [];
 
         if (attendanceRecords.isNotEmpty) {
-          final user = attendanceRecords
-              .first['user']; // Accessing user info from the first record
+          final user = attendanceRecords.first['user'];
 
           if (mounted) {
             setState(() {
@@ -84,9 +82,6 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
           isLoading = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching attendance details: $e')),
-      );
     }
   }
 
