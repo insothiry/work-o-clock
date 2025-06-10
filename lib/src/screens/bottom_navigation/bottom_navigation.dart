@@ -19,10 +19,10 @@ class BottomNavigationState extends State<BottomNavigation> {
   // List of widgets to display in each tab
   final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
-    CalendarScreen(),
+    const CalendarScreen(),
     const PayrollScreen(),
     const OwnAttendanceScreen(),
-    const ProfileScreen(),
+    ProfileScreen(),
   ];
 
   // Function to handle tab selection

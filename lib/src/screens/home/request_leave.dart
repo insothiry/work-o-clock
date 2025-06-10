@@ -23,9 +23,9 @@ class RequestLeaveScreen extends StatefulWidget {
 
 class RequestLeaveScreenState extends State<RequestLeaveScreen> {
   final leaveTypes = [
-    {'name': 'Sick Leave', 'value': LeaveTypes.sick, 'applicableDays': 15},
+    {'name': 'Sick Leave', 'value': LeaveTypes.sick, 'applicableDays': 7},
     {'name': 'Annual Leave', 'value': LeaveTypes.annual, 'applicableDays': 15},
-    {'name': 'Unpaid Leave', 'value': LeaveTypes.unpaid, 'applicableDays': 0},
+    {'name': 'Unpaid Leave', 'value': LeaveTypes.unpaid, 'applicableDays': 3},
   ];
 
   LeaveTypes? selectedLeaveType;
@@ -37,10 +37,14 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
   double? annualBalance;
   double? unpaidBalance;
 
+  bool leaveTypeError = false;
+  bool reasonError = false;
+  bool dateError = false;
+
   @override
   void initState() {
     super.initState();
-    _getUserData();
+    fetchAndSetUserLeaveBalances();
     startDate = DateTime.now();
     endDate = DateTime.now();
   }
@@ -52,16 +56,25 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
       annualBalance = prefs.getDouble('annual');
       unpaidBalance = prefs.getDouble('unpaid');
     });
-
-    // Debug log
-    print("Retrieved Sick Balance: $sickBalance");
-    print("Retrieved Annual Balance: $annualBalance");
-    print("Retrieved Unpaid Balance: $unpaidBalance");
   }
 
   Future<void> submitLeaveRequest() async {
+    setState(() {
+      leaveTypeError = selectedLeaveType == null;
+      reasonError = reasonController.text.trim().isEmpty;
+      dateError = startDate == null || endDate == null;
+    });
+
+    if (leaveTypeError || reasonError || dateError) {
+      Get.snackbar('Error', 'Please fill in all required fields.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
+    final String? userId = prefs.getString('userId');
+
     if (selectedLeaveType == null) {
       Get.snackbar('Error', 'Please select a leave type.',
           snackPosition: SnackPosition.BOTTOM);
@@ -87,6 +100,8 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
       'reason': reasonController.text,
     };
 
+    print(requestBody);
+
     try {
       final response = await http.post(
         url,
@@ -94,17 +109,63 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
         body: json.encode(requestBody),
       );
 
+      print(response.statusCode);
+
       if (response.statusCode == 201) {
+        // ✅ Refresh leave balances
+        final userRes = await http.get(
+          Uri.parse('http://localhost:3000/api/users/get-user/$userId'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (userRes.statusCode == 200) {
+          final userData = json.decode(userRes.body)['user'];
+          await prefs.setDouble(
+              'sick', userData['leaveBalance']['sick']?.toDouble() ?? 0.0);
+          await prefs.setDouble(
+              'annual', userData['leaveBalance']['annual']?.toDouble() ?? 0.0);
+          await prefs.setDouble(
+              'unpaid', userData['leaveBalance']['unpaid']?.toDouble() ?? 0.0);
+
+          await fetchAndSetUserLeaveBalances();
+        }
+
         showSuccessDialog(context, 'Request submitted successfully.');
-      } else {
-        Get.snackbar('Error', 'Failed to submit the leave request.',
-            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (error) {
       print('Error submitting leave request: $error');
       Get.snackbar('Error', 'Something went wrong, please try again later.',
           snackPosition: SnackPosition.BOTTOM);
     }
+  }
+
+  Future<void> fetchAndSetUserLeaveBalances() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    final String? userId = prefs.getString('userId');
+
+    final userRes = await http.get(
+      Uri.parse('http://localhost:3000/api/users/get-user/$userId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    print(token);
+    print(userRes.statusCode);
+    print(userId);
+
+    if (userRes.statusCode == 200) {
+      final userData = json.decode(userRes.body)['user'];
+      final leave = userData['leaveBalance'];
+
+      setState(() {
+        sickBalance = leave['sick']?.toDouble() ?? 0.0;
+        annualBalance = leave['annual']?.toDouble() ?? 0.0;
+        unpaidBalance = leave['unpaid']?.toDouble() ?? 0.0;
+      });
+    } else {
+      print('⚠️ Failed to fetch user leave balance');
+    }
+
+    print('sick: $sickBalance, annual: $annualBalance, unpaid: $unpaidBalance');
   }
 
   @override
@@ -144,35 +205,54 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
                       balance = unpaidBalance;
                     }
 
-                    return Container(
-                      margin:
-                          const EdgeInsets.only(top: 10, bottom: 10, right: 10),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.black, width: 0.5),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Radio<LeaveTypes>(
-                                value: leaveType['value'] as LeaveTypes,
-                                groupValue: selectedLeaveType,
-                                onChanged: (LeaveTypes? value) {
-                                  setState(() {
-                                    selectedLeaveType = value;
-                                  });
-                                },
-                              ),
-                              Text(leaveType['name'] as String),
-                            ],
+                    final isSelected = selectedLeaveType == leaveType['value'];
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedLeaveType = leaveType['value'] as LeaveTypes;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        margin: const EdgeInsets.only(
+                            top: 10, bottom: 10, right: 10),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: leaveTypeError
+                                ? Colors.red
+                                : isSelected
+                                    ? BaseColors.primaryColor
+                                    : Colors.black,
+                            width:
+                                leaveTypeError ? 1.5 : (isSelected ? 1.5 : 0.5),
                           ),
-                          Text('Balance: $balance days'),
-                          Text('Full: ${leaveType['applicableDays']} days'),
-                        ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Radio<LeaveTypes>(
+                                  value: leaveType['value'] as LeaveTypes,
+                                  groupValue: selectedLeaveType,
+                                  onChanged: (LeaveTypes? value) {
+                                    setState(() {
+                                      selectedLeaveType = value;
+                                    });
+                                  },
+                                ),
+                                Text(leaveType['name'] as String),
+                              ],
+                            ),
+                            Text('Balance: $balance days'),
+                            Text('Full: ${leaveType['applicableDays']} days'),
+                          ],
+                        ),
                       ),
                     );
                   }),
@@ -199,7 +279,7 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
                 ),
                 controller: TextEditingController(
                   text: startDate != null
-                      ? "${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}"
+                      ? "${startDate!.year} - ${startDate!.month.toString().padLeft(2, '0')} - ${startDate!.day.toString().padLeft(2, '0')}"
                       : '',
                 ),
                 onTap: () async {
@@ -233,7 +313,7 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
                   ),
                   controller: TextEditingController(
                     text: endDate != null
-                        ? "${endDate!.year}-${endDate!.month.toString().padLeft(2, '0')}-${endDate!.day.toString().padLeft(2, '0')}"
+                        ? "${endDate!.year} - ${endDate!.month.toString().padLeft(2, '0')} - ${endDate!.day.toString().padLeft(2, '0')}"
                         : '',
                   ),
                   onTap: () async {
@@ -272,6 +352,7 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
                               onChanged: (LeaveDuration? value) {
                                 setState(() {
                                   selectedDuration = value;
+                                  endDate = startDate;
                                 });
                               },
                             ),
@@ -286,6 +367,7 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
                               onChanged: (LeaveDuration? value) {
                                 setState(() {
                                   selectedDuration = value;
+                                  endDate = startDate;
                                 });
                               },
                             ),
@@ -320,15 +402,20 @@ class RequestLeaveScreenState extends State<RequestLeaveScreen> {
                   prefixIcon: const Icon(Icons.description),
                   filled: true,
                   fillColor: Colors.white,
+                  errorText: reasonError ? 'This field is required' : null,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: Colors.black, width: 0.5),
+                    borderSide: BorderSide(
+                      color: reasonError ? Colors.red : Colors.black,
+                      width: 0.5,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: Colors.black, width: 0.5),
+                    borderSide: BorderSide(
+                      color: reasonError ? Colors.red : Colors.black,
+                      width: 0.5,
+                    ),
                   ),
                 ),
               ),

@@ -15,196 +15,184 @@ class PayrollScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment'),
+        title: const Text('Payroll'),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                height: 350,
-                decoration: BoxDecoration(
-                  color: BaseColors.primaryColor.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: const Center(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 50),
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 70,
-                        child: Icon(
-                          Icons.credit_card,
-                          color: BaseColors.primaryColor,
-                          size: 60,
-                        ),
+      body: Obx(() => RefreshIndicator(
+            onRefresh: () async {
+              await payrollController.fetchUserRates();
+              await payrollController.fetchSalaryForSelectedMonth();
+            },
+            child: SingleChildScrollView(
+              physics:
+                  const AlwaysScrollableScrollPhysics(), // ensure it's scrollable even if short
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
+                      height: 350,
+                      decoration: BoxDecoration(
+                        color: BaseColors.primaryColor.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(50),
                       ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 40),
+                      child: Center(
                         child: Column(
                           children: [
-                            SizedBox(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Monthly Rate',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text('350 USD',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold))
-                              ],
+                            const SizedBox(height: 50),
+                            const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              radius: 70,
+                              child: Icon(
+                                Icons.credit_card,
+                                color: BaseColors.primaryColor,
+                                size: 60,
+                              ),
                             ),
-                            SizedBox(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Hourly Rate',
-                                    style: TextStyle(color: Colors.white)),
-                                Text('1.45 USD',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold))
-                              ],
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 40),
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 30),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Monthly Salary',
+                                          style:
+                                              TextStyle(color: Colors.white)),
+                                      Text(
+                                          '${formatNumber(payrollController.monthlyRate.value)} USD',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 30),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Hourly Rate',
+                                          style:
+                                              TextStyle(color: Colors.white)),
+                                      Text(
+                                          '${formatNumber(payrollController.hourlyRate.value)} USD',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Row(
+                      children: [
+                        const Text('Pay Period: '),
+                        Obx(() {
+                          final selected =
+                              payrollController.selectedMonth.value;
+                          return TextButton(
+                            onPressed: () =>
+                                payrollController.selectMonth(context),
+                            child: Text(
+                              '${selected.year}-${selected.month.toString().padLeft(2, '0')}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const SizedBox(width: 10),
+                      TrackingContainer(
+                        icon: Icons.access_alarm,
+                        title: 'Working Hours',
+                        value: formatNumber(payrollController.totalHours.value),
+                        maxValue: '240',
+                        textColor: BaseColors.primaryColor,
+                      ),
+                      TrackingContainer(
+                        icon: Icons.attach_money,
+                        title: 'Salary',
+                        value:
+                            formatNumber(payrollController.totalSalary.value),
+                        maxValue:
+                            formatNumber(payrollController.monthlyRate.value),
+                        textColor: BaseColors.secondaryColor,
+                      ),
+                      const SizedBox(width: 10),
                     ],
                   ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                children: [
-                  const Text('Pay Period: '),
-                  const Text('From '),
-                  Obx(() {
-                    return payrollController.startDate.value != null
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              payrollController.startDate.value!
-                                  .toLocal()
-                                  .toString()
-                                  .split(' ')[0],
-                            ),
-                          )
-                        : TextButton(
-                            onPressed: () =>
-                                payrollController.selectStartDate(context),
-                            child: const Text('Start Date'),
-                          );
-                  }),
+                  const SizedBox(height: 10),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    child: Text('to'),
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Others',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                   ),
-                  Obx(() {
-                    return payrollController.endDate.value != null
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              payrollController.endDate.value!
-                                  .toLocal()
-                                  .toString()
-                                  .split(' ')[0],
-                            ),
-                          )
-                        : TextButton(
-                            onPressed: () =>
-                                payrollController.selectEndDate(context),
-                            child: const Text('End Date'),
-                          );
-                  }),
-                ],
-              ),
-            ),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(width: 10),
-                TrackingContainer(
-                  icon: Icons.access_alarm,
-                  title: 'Working Hours',
-                  value: '120',
-                  maxValue: '240',
-                  textColor: BaseColors.primaryColor,
-                ),
-                TrackingContainer(
-                  icon: Icons.attach_money,
-                  title: 'Salary',
-                  value: '174',
-                  maxValue: '350',
-                  textColor: BaseColors.secondaryColor,
-                ),
-                SizedBox(width: 10),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Others',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  const ListTile(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                    leading: Text(
+                      'Monthly Tax',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    title: Text('10%'),
+                    trailing: Text(
+                      '3.5 USD',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const Divider(),
+                  const ListTile(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                    leading: Text(
+                      'NSSF',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    trailing: Text(
+                      '12 USD',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: BaseButton(
+                      text: 'View Pay Slip',
+                      onPressed: () {
+                        Get.to(() => const PaySlipDetail());
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-            const ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
-              leading: Text(
-                'Monthly Tax',
-                style: TextStyle(fontSize: 16),
-              ),
-              title: Text('10%'),
-              trailing: Text(
-                '3.5 USD',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-            const Divider(),
-            const ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
-              leading: Text(
-                'NSSF',
-                style: TextStyle(fontSize: 16),
-              ),
-              trailing: Text(
-                '12 USD',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: BaseButton(
-                  text: 'View Pay Slip',
-                  onPressed: () {
-                    Get.to(const PaySlipDetail());
-                  }),
-            )
-          ],
-        ),
-      ),
+          )),
     );
+  }
+
+  String formatNumber(double value) {
+    if (value == value.toInt()) {
+      return value.toInt().toString();
+    } else {
+      return value.toStringAsFixed(2);
+    }
   }
 }

@@ -4,7 +4,15 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
 class BaseCalendar extends StatefulWidget {
-  const BaseCalendar({super.key});
+  final Function(DateTime)? onMonthChanged;
+  final Function(DateTime)? onDaySelected;
+  final Function(DateTime, DateTime)? onRangeSelected;
+
+  const BaseCalendar(
+      {super.key,
+      this.onMonthChanged,
+      this.onDaySelected,
+      this.onRangeSelected});
 
   @override
   BaseCalendarState createState() => BaseCalendarState();
@@ -12,9 +20,11 @@ class BaseCalendar extends StatefulWidget {
 
 class BaseCalendarState extends State<BaseCalendar> {
   late DateTime _focusedDay;
-  late DateTime _selectedDay;
+  DateTime? _selectedDay;
   bool _isWeekView = false;
   bool isDarkMode = false;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
 
   @override
   void initState() {
@@ -34,11 +44,28 @@ class BaseCalendarState extends State<BaseCalendar> {
       calendarFormat: _isWeekView ? CalendarFormat.week : CalendarFormat.month,
       focusedDay: _focusedDay,
       selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      rangeStartDay: _rangeStart,
+      rangeEndDay: _rangeEnd,
+      rangeSelectionMode: RangeSelectionMode.toggledOn,
       onDaySelected: (selectedDay, focusedDay) {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
+          _rangeStart = null;
+          _rangeEnd = null;
         });
+        widget.onDaySelected?.call(selectedDay);
+      },
+      onRangeSelected: (start, end, focusedDay) {
+        setState(() {
+          _rangeStart = start;
+          _rangeEnd = end;
+          _selectedDay = null;
+          _focusedDay = focusedDay;
+        });
+        if (start != null && end != null) {
+          widget.onRangeSelected?.call(start, end);
+        }
       },
       firstDay: DateTime.utc(2020, 1, 1),
       lastDay: DateTime.utc(2030, 12, 31),
@@ -87,6 +114,7 @@ class BaseCalendarState extends State<BaseCalendar> {
         setState(() {
           _focusedDay = focusedDay;
         });
+        widget.onMonthChanged?.call(focusedDay);
       },
     );
   }

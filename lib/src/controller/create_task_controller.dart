@@ -24,7 +24,6 @@ class CreateTaskController extends GetxController {
         content: Text('Task Created: $title'),
       ));
 
-      // Close the dialog
       Get.back();
     }
   }
@@ -38,7 +37,7 @@ class CreateTaskController extends GetxController {
     );
     if (picked != null && picked != dueDate) {
       dueDate = picked;
-      update(); // Notify listeners about the change
+      update();
     }
   }
 
@@ -46,7 +45,7 @@ class CreateTaskController extends GetxController {
     final result = await FilePicker.platform.pickFiles();
     if (result != null && result.files.isNotEmpty) {
       attachmentsController.text = result.files.first.name;
-      update(); // Notify listeners about the change
+      update();
     }
   }
 

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:work_o_clock/src/screens/bottom_navigation/bottom_navigation.dart';
 import 'package:work_o_clock/src/screens/login/login_screen.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 
@@ -52,9 +54,20 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 4), () {
-      Get.offAll(() => LoginScreen());
-    });
+    // Check login status after 4 seconds
+    Timer(const Duration(seconds: 4), _checkLoginStatus);
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    String? token = pref.getString('token');
+    String? role = pref.getString('role');
+
+    if (token != null && role != null) {
+      Get.offAll(() => const BottomNavigation());
+    } else {
+      Get.offAll(() => const LoginScreen());
+    }
   }
 
   @override
@@ -78,7 +91,6 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo with bounce animation
                   Transform.translate(
                     offset: Offset(0, _bounceAnimation.value),
                     child: Image.asset(
@@ -88,7 +100,6 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Static text
                   const Text(
                     "WorkO' Clock",
                     style: TextStyle(

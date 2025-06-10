@@ -20,11 +20,11 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController durationController = TextEditingController();
   final TextEditingController reasonController = TextEditingController();
+  String? selectedOTType = 'weekday';
 
   @override
   void initState() {
     super.initState();
-    // Initialize the date field with today's date
     dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
@@ -48,8 +48,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
     final String date = dateController.text;
     final String durationText = durationController.text;
     final String reason = reasonController.text;
+    final String? type = selectedOTType;
 
-    if (durationText.isEmpty || reason.isEmpty) {
+    if (durationText.isEmpty || reason.isEmpty || type == null) {
       Get.snackbar('Error', 'All fields are required.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.redAccent,
@@ -70,6 +71,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
       "date": date,
       "hours": duration,
       "reason": reason,
+      "type": type, // ✅ Include OT type in the request
     };
 
     try {
@@ -82,11 +84,11 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
       if (response.statusCode == 201) {
         showSuccessDialog(context, 'Request submitted successfully.');
 
-        // Clear the fields after successful submission
         setState(() {
           dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
           durationController.clear();
           reasonController.clear();
+          selectedOTType = 'weekday';
         });
       } else {
         Get.snackbar('Error', 'Failed to submit the request. Please try again.',
@@ -111,9 +113,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: BaseColors.primaryColor,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -121,10 +121,8 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Date',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              const Text('Date',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: dateController,
@@ -132,8 +130,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                   hintText: 'Select date',
                   prefixIcon: const Icon(Icons.calendar_today),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 readOnly: true,
                 onTap: () async {
@@ -143,7 +140,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2101),
                   );
-
                   if (selectedDate != null) {
                     setState(() {
                       dateController.text =
@@ -153,10 +149,8 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Duration (Hours)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              const Text('Duration (Hours)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: durationController,
@@ -164,16 +158,36 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                   hintText: 'Enter duration',
                   prefixIcon: const Icon(Icons.access_time),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Reason for Overtime',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              const Text('Overtime Type',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: selectedOTType,
+                items: ['weekday', 'weekend', 'holiday']
+                    .map((type) => DropdownMenuItem(
+                          value: type,
+                          child:
+                              Text(type[0].toUpperCase() + type.substring(1)),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedOTType = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
               ),
+              const SizedBox(height: 16),
+              const Text('Reason for Overtime',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: reasonController,
@@ -181,12 +195,10 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                 decoration: InputDecoration(
                   hintText: 'Enter your reason',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
               ),
               const SizedBox(height: 20),
-              // Submit Button
               BaseButton(
                 text: 'Submit Request',
                 onPressed: submitOvertimeRequest,

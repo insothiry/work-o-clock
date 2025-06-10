@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:work_o_clock/src/widgets/base_button.dart';
 import 'package:work_o_clock/src/widgets/base_text_form_field.dart';
 
@@ -18,11 +21,36 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  void _changePassword() {
+  void _changePassword() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password changed successfully')),
+      final pref = await SharedPreferences.getInstance();
+      final token = pref.getString('token');
+
+      final response = await http.post(
+        Uri.parse('http://localhost:3000/api/users/change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'currentPassword': _currentPasswordController.text,
+          'newPassword': _newPasswordController.text,
+        }),
       );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password changed successfully')),
+        );
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
+      } else {
+        final error = jsonDecode(response.body)['message'] ?? 'Failed';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
     }
   }
 
@@ -56,7 +84,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
               // New Password Field
               BaseTextFormField(
-                controller: _currentPasswordController,
+                controller: _newPasswordController,
                 labelText: 'New Password',
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -73,7 +101,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               // Confirm New Password Field
               // New Password Field
               BaseTextFormField(
-                controller: _currentPasswordController,
+                controller: _confirmPasswordController,
                 labelText: 'Confirm New Password',
                 validator: (value) {
                   if (value == null || value.isEmpty) {

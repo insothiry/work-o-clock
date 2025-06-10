@@ -1,230 +1,107 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:work_o_clock/src/controller/attendance_controller.dart';
 import 'package:work_o_clock/src/models/holiday_model.dart';
-import 'package:work_o_clock/src/utils/base_colors.dart';
 import 'package:work_o_clock/src/widgets/base_table_calender.dart';
 
 class CalendarScreen extends StatefulWidget {
-  CalendarScreen({super.key});
+  const CalendarScreen({super.key});
 
   @override
-  _CalendarScreenState createState() => _CalendarScreenState();
+  CalendarScreenState createState() => CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class CalendarScreenState extends State<CalendarScreen> {
+  final controller = Get.put(AttendanceController);
   List<Holiday> holidays = [];
-  bool isAdmin = false;
+  List<Holiday> todayEvents = [];
+  List<Holiday> upcomingEvents = [];
+  List<Holiday> pastEvents = [];
+
+  DateTime selectedMonth = DateTime.now();
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    fetchRoleFromPreferences();
-    fetchHolidays();
+    fetchHolidays(month: selectedMonth);
   }
 
-  // Fetch user role to check if they are admin
-  Future<void> fetchRoleFromPreferences() async {
+  Future<void> fetchHolidays(
+      {DateTime? from, DateTime? to, DateTime? month}) async {
+    setState(() => isLoading = true);
+
     try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? role = prefs.getString('role');
-      if (role == 'admin') {
-        setState(() {
-          isAdmin = true;
-        });
+      SharedPreferences pref = await SharedPreferences.getInstance();
+      final String? token = pref.getString('token');
+
+      String url = 'http://localhost:3000/api/holidays/get-holidays';
+      if (from != null && to != null) {
+        final fromStr = from.toIso8601String();
+        final toStr = to.toIso8601String();
+        url += '?from=$fromStr&to=$toStr';
+      } else if (month != null) {
+        final formattedMonth =
+            '${month.year}-${month.month.toString().padLeft(2, '0')}';
+        url += '?month=$formattedMonth';
       }
-    } catch (e) {
-      print("Error fetching user role from preferences: $e");
-    }
-  }
-
-  // Fetch holidays data
-  Future<void> fetchHolidays() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      final String url = 'http://localhost:3000/api/holidays/get-holidays';
 
       final headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       };
 
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
+      final response = await http.get(Uri.parse(url), headers: headers);
 
       if (response.statusCode == 200) {
         final holidaysData = json.decode(response.body)['data'] as List;
-        setState(() {
-          holidays =
-              holidaysData.map((holiday) => Holiday.fromJson(holiday)).toList();
-        });
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+
+        holidays = holidaysData.map((h) => Holiday.fromJson(h)).toList();
+
+        todayEvents.clear();
+        upcomingEvents.clear();
+        pastEvents.clear();
+
+        for (var h in holidays) {
+          final date = DateTime.parse(h.date);
+          final eventDate = DateTime(date.year, date.month, date.day);
+
+          if (eventDate.isAtSameMomentAs(today)) {
+            todayEvents.add(h);
+          } else if (eventDate.isAfter(today)) {
+            upcomingEvents.add(h);
+          } else {
+            pastEvents.add(h);
+          }
+        }
+
+        pastEvents.sort(
+            (a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
       } else {
-        print("Failed to fetch holidays");
+        debugPrint("Failed to fetch holidays.");
       }
     } catch (e) {
-      print("Error fetching holidays: $e");
+      debugPrint("Error fetching holidays: $e");
+    }
+
+    setState(() => isLoading = false);
+  }
+
+  void onMonthChanged(DateTime newMonth) {
+    if (newMonth.year != selectedMonth.year ||
+        newMonth.month != selectedMonth.month) {
+      setState(() => selectedMonth = newMonth);
+      fetchHolidays(month: newMonth);
     }
   }
 
-// Modify addHoliday to accept the title and date
-  Future<void> addHoliday(String title, String date) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('token');
-      final String url = 'http://localhost:3000/api/holidays/add-holiday';
-
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-        body: jsonEncode({
-          'name': title,
-          'date': date,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        fetchHolidays();
-        print("Holiday added: ${json.decode(response.body)['data']}");
-      } else {
-        print("Failed to add holiday");
-      }
-    } catch (e) {
-      print("Error adding holiday: $e");
-    }
-  }
-
-  void _addVacationDay(BuildContext context) {
-    final TextEditingController titleController = TextEditingController();
-    final TextEditingController dateController = TextEditingController();
-    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
-    showModalBottomSheet(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            top: 16,
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 36,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Add Event',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: titleController,
-                    decoration: InputDecoration(
-                      labelText: 'Title',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.title),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a title';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: dateController,
-                    decoration: InputDecoration(
-                      labelText: 'Date (YYYY-MM-DD)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.calendar_today),
-                    ),
-                    keyboardType: TextInputType.datetime,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a valid date';
-                      }
-                      // Add basic date validation
-                      final regex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-                      if (!regex.hasMatch(value)) {
-                        return 'Enter date in YYYY-MM-DD format';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 100,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (formKey.currentState?.validate() == true) {
-                              addHoliday(
-                                  titleController.text, dateController.text);
-                              Navigator.pop(context);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: BaseColors.primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Add',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  Future<void> _onRefresh() async {
+    await fetchHolidays(month: selectedMonth);
   }
 
   @override
@@ -233,74 +110,117 @@ class _CalendarScreenState extends State<CalendarScreen> {
       appBar: AppBar(title: const Text('Calendar')),
       body: Column(
         children: [
-          // Calendar widget to select a date
-          const BaseCalendar(),
+          BaseCalendar(
+            onMonthChanged: onMonthChanged,
+            onDaySelected: (selectedDate) {
+              fetchHolidays(from: selectedDate, to: selectedDate);
+            },
+            onRangeSelected: (start, end) {
+              fetchHolidays(from: start, to: end);
+            },
+          ),
           const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Upcoming Events',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              textAlign: TextAlign.left,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Events',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
           ),
           const SizedBox(height: 10),
-
-          // Check if there are holidays
-          holidays.isEmpty
-              ? Center(
-                  child: Text(
-                    'No upcoming events',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                  ),
-                )
-              : Expanded(
-                  child: ListView.builder(
-                    itemCount: holidays.length,
-                    itemBuilder: (context, index) {
-                      final holiday = holidays[index];
-                      // Parse the ISO8601 date string
-                      final DateTime parsedDate = DateTime.parse(holiday.date);
-                      // Format the date in "YYYY-MM-DD"
-                      final String formattedDate =
-                          '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
-
-                      return Card(
-                        color: Colors.grey[100],
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : holidays.isEmpty
+                      ? ListView(
                           children: [
-                            ListTile(
-                              title: Text(
-                                holiday.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: Center(
+                                child: Text(
+                                  'No events found',
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.grey[600]),
                                 ),
                               ),
-                              subtitle: Text(
-                                'Date: $formattedDate',
-                              ),
-                              onTap: () {},
                             ),
                           ],
+                        )
+                      : ListView(
+                          children: [
+                            if (todayEvents.isNotEmpty)
+                              _buildEventSection(
+                                  'Today\'s Events', todayEvents),
+                            if (upcomingEvents.isNotEmpty)
+                              _buildEventSection(
+                                  'Upcoming Events', upcomingEvents),
+                            if (pastEvents.isNotEmpty)
+                              _buildEventSection('Past Events', pastEvents),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                ),
+            ),
+          ),
         ],
       ),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton(
-              backgroundColor: BaseColors.primaryColor,
-              onPressed: () => _addVacationDay(context),
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
+    );
+  }
+
+  Widget _buildEventSection(String title, List<Holiday> events) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    Color getCardColor() {
+      if (title.contains('Today')) {
+        return isDarkMode ? Colors.blue.shade800 : Colors.blue.shade50;
+      }
+      if (title.contains('Upcoming')) {
+        return isDarkMode ? Colors.green.shade700 : Colors.green.shade50;
+      }
+      return isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200; // Past
+    }
+
+    Color getTextColor() => isDarkMode ? Colors.white : Colors.black;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: getTextColor(),
+            ),
+          ),
+        ),
+        ...events.map((holiday) {
+          final parsedDate = DateTime.parse(holiday.date);
+          final formattedDate =
+              '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
+          return Card(
+            color: getCardColor(),
+            margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+            child: ListTile(
+              title: Text(
+                holiday.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: getTextColor(),
+                ),
               ),
-            )
-          : null,
+              subtitle: Text(
+                'Date: $formattedDate',
+                style: TextStyle(color: getTextColor().withOpacity(0.8)),
+              ),
+            ),
+          );
+        }).toList(),
+      ],
     );
   }
 }

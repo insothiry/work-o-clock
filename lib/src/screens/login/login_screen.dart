@@ -3,20 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:work_o_clock/src/screens/bottom_navigation/admin_bottom_navigation.dart';
 import 'package:work_o_clock/src/screens/bottom_navigation/bottom_navigation.dart';
-import 'package:work_o_clock/src/screens/register/register_screen.dart';
 import 'package:work_o_clock/src/utils/base_colors.dart';
 import 'package:work_o_clock/src/widgets/base_button.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  LoginScreen({super.key});
+  bool _obscurePassword = true;
+  bool _isLoading = false; // NEW
 
   Future<void> login(BuildContext context) async {
+    setState(() => _isLoading = true); // Start loading
     const String url = 'http://localhost:3000/api/auth/login';
     final String email = emailController.text;
     final String password = passwordController.text;
@@ -36,7 +42,6 @@ class LoginScreen extends StatelessWidget {
         final String role = data['user']['role'];
         final Map<String, dynamic> leaveBalance = data['user']['leaveBalance'];
 
-        // Save token and user details locally
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setString('role', role);
@@ -44,32 +49,27 @@ class LoginScreen extends StatelessWidget {
         await prefs.setString('userName', data['user']['name']);
         await prefs.setString('email', data['user']['email']);
         await prefs.setString('companyId', data['user']['company']);
-
-        // Save individual leave balances
+        await prefs.setString('job', data['user']['job']);
+        await prefs.setString('departmentId', data['user']['department']);
         await prefs.setDouble('sick', leaveBalance['sick'].toDouble());
         await prefs.setDouble('annual', leaveBalance['annual'].toDouble());
         await prefs.setDouble('unpaid', leaveBalance['unpaid'].toDouble());
 
-        // Navigate based on role
-        if (role == 'admin') {
-          Get.offAll(const AdminBottomNavigation());
-        } else {
-          Get.offAll(const BottomNavigation());
-        }
+        Get.offAll(const BottomNavigation());
       } else {
         _showErrorSnackBar(context, 'Invalid credentials.');
       }
     } catch (e) {
+      print("Login error: $e");
       _showErrorSnackBar(context, 'An error occurred. Please try again.');
+    } finally {
+      setState(() => _isLoading = false); // Stop loading
     }
   }
 
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
     );
   }
 
@@ -83,33 +83,23 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
               Image.asset('assets/images/login-img.jpg'),
-
-              // Title
               const Text(
                 'Welcome',
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: BaseColors.primaryColor,
-                ),
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: BaseColors.primaryColor),
               ),
               const SizedBox(height: 8),
-
-              Text(
-                'Log in to continue',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
+              Text('Log in to continue',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600])),
               const SizedBox(height: 24),
-
-              // Form
               Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Email field
                     TextFormField(
                       controller: emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -117,8 +107,7 @@ class LoginScreen extends StatelessWidget {
                         labelText: 'Email',
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -131,79 +120,48 @@ class LoginScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-
-                    // Password field
                     TextFormField(
                       controller: passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
                         ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
-                        if (value.length < 6) {
-                          return 'Incorrect Password!';
-                        }
+                        if (value.length < 6) return 'Incorrect Password!';
                         return null;
                       },
                     ),
                     const SizedBox(height: 24),
-
-                    // Login button
-                    BaseButton(
-                      text: 'Login',
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() == true) {
-                          login(context);
-                        }
-                      },
-                    ),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : BaseButton(
+                            text: 'Login',
+                            onPressed: () {
+                              if (_formKey.currentState?.validate() == true) {
+                                login(context);
+                              }
+                            },
+                          ),
                     const SizedBox(height: 16),
-
-                    // Forgot Password link
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          // Navigate to Forgot Password screen
-                        },
+                        onPressed: () {},
                         child: const Text(
                           'Forgot Password?',
-                          style: TextStyle(
-                            color: BaseColors.primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const Divider(
-                      indent: 12,
-                    ),
-
-                    const Center(
-                      child: Text('Or'),
-                    ),
-
-                    // Navigate to Admin Register
-                    Align(
-                      alignment: Alignment.center,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => AdminRegisterScreen()),
-                          );
-                        },
-                        child: const Text(
-                          'Register as Admin',
                           style: TextStyle(
                             color: BaseColors.primaryColor,
                             fontWeight: FontWeight.bold,
